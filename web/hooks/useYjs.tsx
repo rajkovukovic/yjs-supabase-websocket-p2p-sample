@@ -42,9 +42,23 @@ export function YjsProvider({
       documentState.status = status
     })
     
-    // Track peers (WebRTC is optional)
+    // Track connected users via Awareness (works with Hocuspocus, no WebRTC needed)
+    const awareness = providers.hocuspocusProvider.awareness
+    
+    const updatePeerCount = () => {
+      // Get all awareness states (including self)
+      const states = Array.from(awareness.getStates().keys())
+      // Subtract 1 to exclude self
+      documentState.peers = Math.max(0, states.length - 1)
+    }
+    
+    awareness.on('change', updatePeerCount)
+    updatePeerCount() // Initial count
+    
+    // Also track WebRTC peers if enabled (optional)
     if (providers.webrtcProvider) {
       providers.webrtcProvider.on('peers', ({ webrtcPeers }: any) => {
+        // Use WebRTC peer count if available (more accurate for P2P)
         documentState.peers = webrtcPeers.length
       })
     }

@@ -17,7 +17,7 @@ export function setupProviders(documentName: string, ydoc: Y.Doc) {
     name: documentName,
     document: ydoc,
     
-    // No token needed for MVP
+    // No token field - authentication is disabled on server for MVP
     
     onSynced: ({ state }) => {
       console.log('Hocuspocus synced:', state)
@@ -25,6 +25,10 @@ export function setupProviders(documentName: string, ydoc: Y.Doc) {
     
     onStatus: ({ status }) => {
       console.log('Connection status:', status)
+    },
+    
+    onAuthenticationFailed: ({ reason }) => {
+      console.error('Authentication failed:', reason)
     }
   })
   

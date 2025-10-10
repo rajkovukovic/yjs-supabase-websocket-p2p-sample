@@ -26,43 +26,33 @@ const server = Server.configure({
   
   /**
    * Authentication hook
-   * For MVP: No authentication (everyone can access)
-   * TODO: Add proper auth in production
+   * For MVP: Authentication is DISABLED - no onAuthenticate hook
+   * When this hook is not defined, Hocuspocus allows all connections without authentication
+   * TODO: Add proper auth in production by uncommenting below
    */
-  async onAuthenticate({ documentName, requestHeaders, requestParameters }) {
-    console.log(`[Hocuspocus] Auth request for document: ${documentName}`)
-    
-    // MVP: Allow all connections with anonymous user
-    return {
-      user: {
-        id: 'anonymous',
-        name: 'Guest User'
-      }
-    }
-    
-    // Production example (uncomment and implement):
-    /*
-    const token = requestHeaders.authorization?.split(' ')[1]
-    
-    if (!token) {
-      throw new Error('No token provided')
-    }
-    
-    // Verify token with Supabase Auth
-    const { data: { user }, error } = await supabase.auth.getUser(token)
-    
-    if (error || !user) {
-      throw new Error('Invalid token')
-    }
-    
-    return {
-      user: {
-        id: user.id,
-        name: user.email || 'Unknown User'
-      }
-    }
-    */
-  },
+  // async onAuthenticate({ documentName, requestHeaders, requestParameters }) {
+  //   console.log(`[Hocuspocus] Auth request for document: ${documentName}`)
+  //   
+  //   const token = requestHeaders.authorization?.split(' ')[1] || requestParameters.token
+  //   
+  //   if (!token) {
+  //     throw new Error('No token provided')
+  //   }
+  //   
+  //   // Verify token with Supabase Auth
+  //   const { data: { user }, error } = await supabase.auth.getUser(token)
+  //   
+  //   if (error || !user) {
+  //     throw new Error('Invalid token')
+  //   }
+  //   
+  //   return {
+  //     user: {
+  //       id: user.id,
+  //       name: user.email || 'Unknown User'
+  //     }
+  //   }
+  // },
   
   /**
    * Called when a document is loaded into memory
