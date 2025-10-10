@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth transitions for non-dragging updates */
+rect {
+  transition: x 0.1s, y 0.1s, width 0.1s, height 0.1s;
+}
+
+rect:hover {
+  stroke-width: 3;
+  filter: drop-shadow(0 0 5px rgba(0,0,0,0.3));
+}
+

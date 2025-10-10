@@ -1,0 +1,55 @@
+import { proxy } from 'valtio'
+import * as Y from 'yjs'
+import { Rectangle, DocumentState } from '../types'
+
+export const documentState = proxy<DocumentState>({
+  rectangles: [],
+  synced: false,
+  status: 'disconnected',
+  peers: 0
+})
+
+// Sync Yjs to Valtio
+export function syncYjsToValtio(ydoc: Y.Doc) {
+  const yRectangles = ydoc.getArray<Rectangle>('rectangles')
+  
+  const observer = () => {
+    documentState.rectangles = yRectangles.toArray()
+  }
+  
+  yRectangles.observe(observer)
+  observer() // Initial sync
+  
+  return () => yRectangles.unobserve(observer)
+}
+
+// Valtio actions (update Yjs document)
+export const actions = {
+  addRectangle(ydoc: Y.Doc, rect: Rectangle) {
+    const yRectangles = ydoc.getArray('rectangles')
+    yRectangles.push([rect])
+  },
+  
+  updateRectangle(ydoc: Y.Doc, id: string, updates: Partial<Rectangle>) {
+    ydoc.transact(() => {
+      const yRectangles = ydoc.getArray('rectangles')
+      const index = yRectangles.toArray().findIndex((r: Rectangle) => r.id === id)
+      
+      if (index !== -1) {
+        const current = yRectangles.get(index) as Rectangle
+        yRectangles.delete(index, 1)
+        yRectangles.insert(index, [{ ...current, ...updates }])
+      }
+    })
+  },
+  
+  deleteRectangle(ydoc: Y.Doc, id: string) {
+    const yRectangles = ydoc.getArray('rectangles')
+    const index = yRectangles.toArray().findIndex((r: Rectangle) => r.id === id)
+    
+    if (index !== -1) {
+      yRectangles.delete(index, 1)
+    }
+  }
+}
+
