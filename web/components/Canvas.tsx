@@ -74,6 +74,11 @@ function CanvasContent({
     return { x, y }
   }
 
+  // Reset pan and zoom to initial state
+  const handleResetView = () => {
+    resetTransform(300, 'easeOut')
+  }
+
   // Helper function to check if two rectangles intersect
   const rectanglesIntersect = (rect1: {x: number, y: number, width: number, height: number}, rect2: {x: number, y: number, width: number, height: number}) => {
     return !(rect1.x + rect1.width < rect2.x ||
@@ -346,35 +351,80 @@ function CanvasContent({
 
   return (
     <CoordinateContext.Provider value={{ getSVGPoint }}>
-      {/* Zoom Controls */}
-      <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
-        <button
-          onClick={() => zoomIn(0.2, 300, 'easeOut')}
-          className="bg-white hover:bg-gray-100 p-2 rounded shadow-md transition-colors"
-          title="Zoom In (Scroll Up)"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+      {/* Zoom Controls and Status - Bottom Left */}
+      <div className="fixed bottom-6 left-6 z-20 flex items-center gap-3 bg-white/95 backdrop-blur-sm px-4 py-2.5 rounded-xl shadow-lg border border-gray-200/50">
+        {/* Sync Status */}
+        <div className={`flex items-center gap-1.5 ${snap.synced ? 'text-emerald-600' : 'text-amber-600'}`} title={snap.synced ? 'Synced' : 'Syncing...'}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {snap.synced ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="2s" repeatCount="indefinite" />
+              </path>
+            )}
           </svg>
-        </button>
+        </div>
+
+        {/* Divider */}
+        <div className="w-px h-5 bg-gray-300" />
+
+        {/* Connection Status */}
+        <div className={`flex items-center gap-1.5 ${snap.status === 'connected' ? 'text-emerald-600' : 'text-gray-400'}`} title={`Status: ${snap.status}`}>
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+          </svg>
+        </div>
+
+        {/* Divider */}
+        <div className="w-px h-5 bg-gray-300" />
+
+        {/* Connected Peers */}
+        <div className="flex items-center gap-1.5 text-gray-700" title={`Connected peers: ${snap.peers}`}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <span className="text-sm font-medium">{snap.peers}</span>
+        </div>
+
+        {/* Divider */}
+        <div className="w-px h-5 bg-gray-300" />
+
+        {/* Zoom Out */}
         <button
           onClick={() => zoomOut(0.2, 300, 'easeOut')}
-          className="bg-white hover:bg-gray-100 p-2 rounded shadow-md transition-colors"
-          title="Zoom Out (Scroll Down)"
+          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+          title="Zoom Out"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
           </svg>
         </button>
+
+        {/* Zoom Percentage - Clickable to Reset */}
         <button
-          onClick={() => resetTransform(300, 'easeOut')}
-          className="bg-white hover:bg-gray-100 p-2 rounded shadow-md transition-colors"
-          title="Reset View"
+          onClick={handleResetView}
+          className="min-w-[3rem] text-center hover:bg-gray-100 px-2 py-1 rounded-lg transition-colors"
+          title="Reset zoom and pan"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+          <span className="text-sm font-medium text-gray-700">{Math.round(transformState.scale * 100)}%</span>
+        </button>
+
+        {/* Zoom In */}
+        <button
+          onClick={() => zoomIn(0.2, 300, 'easeOut')}
+          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+          title="Zoom In"
+        >
+          <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
         </button>
+
+        {/* Divider */}
+        <div className="w-px h-5 bg-gray-300" />
+
+        {/* Create Rectangle Mode */}
         <button
           onClick={() => {
             setIsCreateRectangleMode(!isCreateRectangleMode)
@@ -385,40 +435,18 @@ function CanvasContent({
             setPanStart(null)
             setIsPanning(false)
           }}
-          className={`p-2 rounded shadow-md transition-colors ${
+          className={`p-1.5 rounded-lg transition-all duration-200 ${
             isCreateRectangleMode
               ? 'bg-blue-500 hover:bg-blue-600 text-white'
-              : 'bg-white hover:bg-gray-100'
+              : 'hover:bg-gray-100 text-gray-700'
           }`}
-          title={isCreateRectangleMode ? "Exit Create Rectangle Mode (Esc)" : "Create Rectangle Mode"}
+          title={isCreateRectangleMode ? 'Exit Create Rectangle Mode (Esc)' : 'Create Rectangle Mode'}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zM9 9h6v6H9V9z" />
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4z" />
           </svg>
         </button>
-        <div className="bg-white px-2 py-1 rounded shadow-md text-xs text-gray-600">
-          {Math.round(transformState.scale * 100)}%
-        </div>
-      </div>
-
-      {/* Instructions */}
-      <div className="absolute bottom-4 left-4 z-10 bg-white/90 px-3 py-2 rounded shadow-md text-sm text-gray-600">
-        <div className="font-semibold mb-1">Controls:</div>
-        <div>• Scroll/Pinch to zoom</div>
-        <div>• Space + Drag to pan</div>
-        {isCreateRectangleMode ? (
-          <>
-            <div>• Drag to draw rectangle</div>
-            <div>• Click rectangle button or Esc to exit mode</div>
-          </>
-        ) : (
-          <>
-            <div>• Drag to select rectangles</div>
-            <div>• Click to deselect</div>
-            <div>• Click rectangle button for create mode</div>
-          </>
-        )}
-        <div>• Delete/Backspace to remove selected</div>
       </div>
 
       <TransformComponent
