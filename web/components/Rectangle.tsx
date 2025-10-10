@@ -15,7 +15,21 @@ export function Rectangle(props: RectangleType) {
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation()
     setIsDragging(true)
-    setDragStart({ x: e.clientX - props.x, y: e.clientY - props.y })
+    
+    // Convert screen coordinates to SVG coordinates
+    const svg = document.querySelector('svg')
+    if (!svg) return
+    
+    const pt = svg.createSVGPoint()
+    pt.x = e.clientX
+    pt.y = e.clientY
+    const matrix = svg.getScreenCTM()
+    if (!matrix) return
+    
+    const svgP = pt.matrixTransform(matrix.inverse())
+    
+    // Calculate offset in SVG coordinate space
+    setDragStart({ x: svgP.x - props.x, y: svgP.y - props.y })
   }
   
   const handleMouseMove = useCallback((e: MouseEvent) => {
