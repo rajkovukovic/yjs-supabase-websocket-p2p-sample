@@ -26,7 +26,7 @@ export function StatusBar() {
       </div>
       
       <div className="ml-auto text-gray-500 text-xs">
-        Click to add rectangle • Cmd+Click to pan
+        Click to add rectangle • Space+Drag to pan • Delete to remove
       </div>
     </div>
   )

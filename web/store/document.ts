@@ -6,7 +6,8 @@ export const documentState = proxy<DocumentState>({
   rectangles: [],
   synced: false,
   status: 'disconnected',
-  peers: 0
+  peers: 0,
+  selectedRectangleId: null
 })
 
 // Sync Yjs to Valtio
@@ -50,6 +51,10 @@ export const actions = {
     if (index !== -1) {
       yRectangles.delete(index, 1)
     }
+  },
+  
+  setSelectedRectangle(id: string | null) {
+    documentState.selectedRectangleId = id
   }
 }
 

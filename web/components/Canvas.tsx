@@ -17,12 +17,45 @@ export function Canvas() {
   const [isPanning, setIsPanning] = useState(false)
   const [hasPanned, setHasPanned] = useState(false)
   const [panStart, setPanStart] = useState({ x: 0, y: 0 })
+  const [isSpacePressed, setIsSpacePressed] = useState(false)
   
   const svgRef = useRef<SVGSVGElement>(null)
   
+  // Keyboard handlers
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !isSpacePressed) {
+        e.preventDefault()
+        setIsSpacePressed(true)
+      }
+      
+      if ((e.code === 'Backspace' || e.code === 'Delete') && snap.selectedRectangleId) {
+        e.preventDefault()
+        actions.deleteRectangle(ydoc, snap.selectedRectangleId)
+        actions.setSelectedRectangle(null)
+      }
+    }
+    
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        e.preventDefault()
+        setIsSpacePressed(false)
+        setIsPanning(false)
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+    }
+  }, [isSpacePressed, snap.selectedRectangleId, ydoc])
+  
   // Pan handler
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button === 1 || (e.button === 0 && e.metaKey)) { // Middle or Cmd+Click
+    if (e.button === 0 && isSpacePressed) { // Space + Click
       e.preventDefault()
       setIsPanning(true)
       setHasPanned(false)
@@ -54,7 +87,7 @@ export function Canvas() {
     setTimeout(() => setHasPanned(false), 50)
   }
   
-  // Click to add rectangle
+  // Click to add rectangle or deselect
   const handleCanvasClick = (e: React.MouseEvent<SVGSVGElement>) => {
     // Don't create rectangle if we just panned
     if (hasPanned) {
@@ -62,6 +95,14 @@ export function Canvas() {
     }
     
     if (e.target === svgRef.current || (e.target as SVGElement).id === 'background') {
+      // Deselect if clicking on background
+      actions.setSelectedRectangle(null)
+      
+      // Don't add rectangle if space is pressed (pan mode)
+      if (isSpacePressed) {
+        return
+      }
+      
       const rect = svgRef.current!.getBoundingClientRect()
       const x = ((e.clientX - rect.left) / rect.width) * viewBox.width + viewBox.x
       const y = ((e.clientY - rect.top) / rect.height) * viewBox.height + viewBox.y
@@ -86,7 +127,7 @@ export function Canvas() {
       style={{ 
         width: '100%', 
         height: '100%', 
-        cursor: isPanning ? 'grabbing' : 'default',
+        cursor: isPanning ? 'grabbing' : isSpacePressed ? 'grab' : 'default',
         background: '#f5f5f5'
       }}
       onMouseDown={handleMouseDown}
@@ -104,7 +145,12 @@ export function Canvas() {
       <rect id="background" width="100%" height="100%" fill="url(#grid)" />
       
       {snap.rectangles.map(rect => (
-        <Rectangle key={rect.id} {...rect} />
+        <Rectangle 
+          key={rect.id} 
+          {...rect} 
+          isSelected={snap.selectedRectangleId === rect.id}
+          onSelect={() => actions.setSelectedRectangle(rect.id)}
+        />
       ))}
     </svg>
   )

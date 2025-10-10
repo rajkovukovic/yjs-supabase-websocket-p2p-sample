@@ -5,7 +5,12 @@ import { actions } from '../store/document'
 import { useYDoc } from '../hooks/useYjs'
 import { Rectangle as RectangleType } from '../types'
 
-export function Rectangle(props: RectangleType) {
+interface RectangleProps extends RectangleType {
+  isSelected?: boolean
+  onSelect?: () => void
+}
+
+export function Rectangle(props: RectangleProps) {
   const ydoc = useYDoc()
   const [isDragging, setIsDragging] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
@@ -14,6 +19,12 @@ export function Rectangle(props: RectangleType) {
   // Drag handlers
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation()
+    
+    // Select rectangle when clicked
+    if (props.onSelect) {
+      props.onSelect()
+    }
+    
     setIsDragging(true)
     
     // Convert screen coordinates to SVG coordinates
@@ -107,8 +118,8 @@ export function Rectangle(props: RectangleType) {
         width={props.width}
         height={props.height}
         fill={props.fill}
-        stroke={props.stroke || '#000'}
-        strokeWidth={props.strokeWidth || 2}
+        stroke={props.isSelected ? '#2563eb' : (props.stroke || '#000')}
+        strokeWidth={props.isSelected ? 3 : (props.strokeWidth || 2)}
         className={(isDragging || isResizing) ? 'no-transition' : ''}
         style={{ cursor: isDragging ? 'grabbing' : 'move' }}
         onMouseDown={handleMouseDown}
