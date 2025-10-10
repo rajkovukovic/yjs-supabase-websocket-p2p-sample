@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # Hocuspocus WebSocket Server
+  hocuspocus:
+    build:
+      context: .
+      dockerfile: Dockerfile.hocuspocus
+    ports:
+      - "1234:1234"
+    environment:
+      - NODE_ENV=production
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - HOCUSPOCUS_PORT=1234
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+    restart: unless-stopped
+    networks:
+      - collab-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:1234"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # WebRTC Signaling Server
+  signaling:
+    build:
+      context: .
+      dockerfile: Dockerfile.signaling
+    ports:
+      - "4444:4444"
+    environment:
+      - NODE_ENV=production
+      - SIGNALING_PORT=4444
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+    restart: unless-stopped
+    networks:
+      - collab-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4444/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  collab-network:
+    driver: bridge
+

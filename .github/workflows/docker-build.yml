@@ -1,0 +1,115 @@
+name: Docker Build Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-hocuspocus-build:
+    name: Test Hocuspocus Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Build Hocuspocus Docker Image
+        run: |
+          cd server
+          docker build -f Dockerfile.hocuspocus -t yjs-hocuspocus:test .
+      
+      - name: Test Image
+        run: |
+          docker run --rm yjs-hocuspocus:test node --version
+
+  test-signaling-build:
+    name: Test Signaling Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Build Signaling Docker Image
+        run: |
+          cd server
+          docker build -f Dockerfile.signaling -t yjs-signaling:test .
+      
+      - name: Test Image
+        run: |
+          docker run --rm yjs-signaling:test node --version
+
+  test-web-build:
+    name: Test Web App Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Build Web App Docker Image
+        run: |
+          cd web
+          docker build -f Dockerfile -t yjs-web:test .
+      
+      - name: Test Image
+        run: |
+          docker run --rm yjs-web:test node --version
+
+  lint-server:
+    name: Lint Server Code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: server/pnpm-lock.yaml
+      
+      - name: Install dependencies
+        working-directory: server
+        run: pnpm install --frozen-lockfile
+      
+      - name: Type check
+        working-directory: server
+        run: pnpm run build
+
+  lint-web:
+    name: Lint Web App Code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: web/pnpm-lock.yaml
+      
+      - name: Install dependencies
+        working-directory: web
+        run: pnpm install --frozen-lockfile
+      
+      - name: Lint
+        working-directory: web
+        run: pnpm run lint
+      
+      - name: Build
+        working-directory: web
+        run: pnpm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://test.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: test-key
+          NEXT_PUBLIC_HOCUSPOCUS_URL: wss://test.com
+          NEXT_PUBLIC_SIGNALING_URL: wss://test.com
+
