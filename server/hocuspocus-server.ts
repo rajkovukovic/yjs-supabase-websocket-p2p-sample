@@ -1,12 +1,10 @@
+// Load config FIRST - this initializes environment variables
+import { config } from './config.js'
 import { Server } from '@hocuspocus/server'
 import { SupabaseDatabase, storeUpdate } from './extensions/supabase-db.js'
-import dotenv from 'dotenv'
 
-// Load environment variables
-dotenv.config()
-
-const PORT = parseInt(process.env.HOCUSPOCUS_PORT || '1234')
-const CORS_ORIGIN = process.env.CORS_ORIGIN || '*'
+const PORT = config.hocuspocus.port
+const CORS_ORIGIN = config.cors.origin
 
 /**
  * Hocuspocus WebSocket Server
@@ -129,7 +127,7 @@ const server = Server.configure({
   async onConfigure({ configuration }) {
     return {
       ...configuration,
-      quiet: process.env.NODE_ENV === 'production',
+      quiet: config.nodeEnv === 'production',
     }
   }
 })
@@ -144,7 +142,7 @@ console.log(`
 ║                                                        ║
 ║   Port: ${PORT}                                        ║
 ║   WebSocket: ws://localhost:${PORT}                    ║
-║   Environment: ${process.env.NODE_ENV || 'development'}║
+║   Environment: ${config.nodeEnv}                       ║
 ║                                                        ║
 ║   Ready for real-time collaboration! ✨               ║
 ║                                                        ║

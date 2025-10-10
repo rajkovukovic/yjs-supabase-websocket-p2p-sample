@@ -1,13 +1,29 @@
 import { Database } from '@hocuspocus/extension-database'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import * as Y from 'yjs'
 import { decoding, encoding } from 'lib0'
 
-// Initialize Supabase client with service role key for server-side operations
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-)
+// Lazy initialization of Supabase client
+// This will be initialized on first use, after config is loaded
+let supabase: SupabaseClient | null = null
+
+function getSupabaseClient() {
+  if (!supabase) {
+    // Get env vars - they should be loaded by config.ts before this is called
+    const supabaseUrl = process.env.SUPABASE_URL
+    const supabaseKey = process.env.SUPABASE_SERVICE_KEY
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error(
+        'Missing Supabase credentials. Please ensure config.ts is imported first and .env file is properly configured.'
+      )
+    }
+    
+    supabase = createClient(supabaseUrl, supabaseKey)
+    console.log('✓ Supabase client initialized')
+  }
+  return supabase
+}
 
 /**
  * Supabase Database Extension for Hocuspocus
@@ -24,6 +40,7 @@ export const SupabaseDatabase = new Database({
     console.log(`[SupabaseDB] Fetching document: ${documentName}`)
     
     try {
+      const supabase = getSupabaseClient()
       const { data, error } = await supabase
         .from('documents')
         .select('yjs_state')
@@ -68,6 +85,7 @@ export const SupabaseDatabase = new Database({
     console.log(`[SupabaseDB] Storing document: ${documentName}`)
     
     try {
+      const supabase = getSupabaseClient()
       const { error } = await supabase
         .from('documents')
         .upsert({
@@ -101,6 +119,7 @@ export async function storeUpdate(
   clientId: number
 ) {
   try {
+    const supabase = getSupabaseClient()
     // Decode clock from update for tracking
     const decoder = new decoding.Decoder(update)
     const clock = decoding.readVarUint(decoder)
@@ -129,6 +148,7 @@ export async function storeUpdate(
  */
 export async function createSnapshot(documentName: string) {
   try {
+    const supabase = getSupabaseClient()
     // Get last snapshot timestamp
     const { data: lastSnapshot } = await supabase
       .from('document_snapshots')

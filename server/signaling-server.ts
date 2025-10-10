@@ -1,12 +1,10 @@
+// Load config FIRST - this initializes environment variables
+import { config } from './config.js'
 import { Server as SocketIOServer } from 'socket.io'
 import { createServer } from 'http'
-import dotenv from 'dotenv'
 
-// Load environment variables
-dotenv.config()
-
-const PORT = parseInt(process.env.SIGNALING_PORT || '4444')
-const CORS_ORIGIN = process.env.CORS_ORIGIN || '*'
+const PORT = config.signaling.port
+const CORS_ORIGIN = config.cors.origin
 
 /**
  * WebRTC Signaling Server
@@ -202,7 +200,7 @@ httpServer.listen(PORT, () => {
 ║   Port: ${PORT}                                        ║
 ║   WebSocket: ws://localhost:${PORT}                    ║
 ║   Health Check: http://localhost:${PORT}/health        ║
-║   Environment: ${process.env.NODE_ENV || 'development'}║
+║   Environment: ${config.nodeEnv}                       ║
 ║                                                        ║
 ║   Ready for peer-to-peer connections! 🌐              ║
 ║                                                        ║

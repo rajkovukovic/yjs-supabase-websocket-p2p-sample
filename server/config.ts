@@ -1,0 +1,46 @@
+import dotenv from 'dotenv'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+
+// Get current directory in ES modules
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+// Load environment variables from .env file in server directory
+// This MUST be imported before any other modules that use env vars
+dotenv.config({ path: join(__dirname, '.env') })
+
+// Validate required environment variables
+const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY']
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName])
+
+if (missingEnvVars.length > 0) {
+  console.error('\n❌ Missing required environment variables:')
+  missingEnvVars.forEach(varName => {
+    console.error(`   - ${varName}`)
+  })
+  console.error('\nPlease ensure your .env file exists and contains all required variables.')
+  console.error('Copy env.example to .env and fill in the values.\n')
+  process.exit(1)
+}
+
+// Export config values
+export const config = {
+  supabase: {
+    url: process.env.SUPABASE_URL!,
+    serviceKey: process.env.SUPABASE_SERVICE_KEY!,
+  },
+  hocuspocus: {
+    port: parseInt(process.env.HOCUSPOCUS_PORT || '1234'),
+  },
+  signaling: {
+    port: parseInt(process.env.SIGNALING_PORT || '4444'),
+  },
+  cors: {
+    origin: process.env.CORS_ORIGIN || '*',
+  },
+  nodeEnv: process.env.NODE_ENV || 'development',
+}
+
+console.log('✓ Environment variables loaded successfully')
+
