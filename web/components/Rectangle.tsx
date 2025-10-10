@@ -109,6 +109,7 @@ export function Rectangle(props: RectangleType) {
         fill={props.fill}
         stroke={props.stroke || '#000'}
         strokeWidth={props.strokeWidth || 2}
+        className={(isDragging || isResizing) ? 'no-transition' : ''}
         style={{ cursor: isDragging ? 'grabbing' : 'move' }}
         onMouseDown={handleMouseDown}
       />

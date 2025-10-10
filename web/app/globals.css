@@ -22,6 +22,11 @@ rect {
   transition: x 0.1s, y 0.1s, width 0.1s, height 0.1s;
 }
 
+/* Disable transitions when actively dragging/resizing */
+rect.no-transition {
+  transition: none;
+}
+
 rect:hover {
   stroke-width: 3;
   filter: drop-shadow(0 0 5px rgba(0,0,0,0.3));
