@@ -15,6 +15,7 @@ export function Canvas() {
     x: 0, y: 0, width: 1000, height: 1000
   })
   const [isPanning, setIsPanning] = useState(false)
+  const [hasPanned, setHasPanned] = useState(false)
   const [panStart, setPanStart] = useState({ x: 0, y: 0 })
   
   const svgRef = useRef<SVGSVGElement>(null)
@@ -22,13 +23,18 @@ export function Canvas() {
   // Pan handler
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button === 1 || (e.button === 0 && e.metaKey)) { // Middle or Cmd+Click
+      e.preventDefault()
       setIsPanning(true)
+      setHasPanned(false)
       setPanStart({ x: e.clientX, y: e.clientY })
     }
   }
   
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isPanning) return
+    
+    // Mark that we've actually panned (mouse moved)
+    setHasPanned(true)
     
     const dx = (e.clientX - panStart.x) * (viewBox.width / window.innerWidth)
     const dy = (e.clientY - panStart.y) * (viewBox.height / window.innerHeight)
@@ -42,46 +48,19 @@ export function Canvas() {
     setPanStart({ x: e.clientX, y: e.clientY })
   }, [isPanning, panStart, viewBox])
   
-  const handleMouseUp = () => setIsPanning(false)
-  
-  // Zoom handler (using useEffect for non-passive event listener)
-  useEffect(() => {
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault()
-      
-      const scaleFactor = e.deltaY > 0 ? 1.1 : 0.9
-      const newWidth = viewBox.width * scaleFactor
-      const newHeight = viewBox.height * scaleFactor
-      
-      // Zoom towards mouse position
-      const rect = svgRef.current!.getBoundingClientRect()
-      const mouseX = e.clientX - rect.left
-      const mouseY = e.clientY - rect.top
-      const mouseXRatio = mouseX / rect.width
-      const mouseYRatio = mouseY / rect.height
-      
-      setViewBox({
-        x: viewBox.x - (newWidth - viewBox.width) * mouseXRatio,
-        y: viewBox.y - (newHeight - viewBox.height) * mouseYRatio,
-        width: newWidth,
-        height: newHeight
-      })
-    }
-    
-    const svgElement = svgRef.current
-    if (svgElement) {
-      svgElement.addEventListener('wheel', handleWheel, { passive: false })
-    }
-    
-    return () => {
-      if (svgElement) {
-        svgElement.removeEventListener('wheel', handleWheel)
-      }
-    }
-  }, [viewBox])
+  const handleMouseUp = () => {
+    setIsPanning(false)
+    // Keep hasPanned state for a brief moment to prevent click event
+    setTimeout(() => setHasPanned(false), 50)
+  }
   
   // Click to add rectangle
   const handleCanvasClick = (e: React.MouseEvent<SVGSVGElement>) => {
+    // Don't create rectangle if we just panned
+    if (hasPanned) {
+      return
+    }
+    
     if (e.target === svgRef.current || (e.target as SVGElement).id === 'background') {
       const rect = svgRef.current!.getBoundingClientRect()
       const x = ((e.clientX - rect.left) / rect.width) * viewBox.width + viewBox.x

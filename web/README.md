@@ -10,7 +10,7 @@ A real-time collaborative graphic editing tool built with Next.js, Yjs, and Valt
 - ✅ **Server Sync**: Reliable synchronization via Hocuspocus WebSocket server
 - ✅ **Live Cursors**: See other users' cursors in real-time
 - ✅ **SVG Canvas**: Native SVG rendering for crisp graphics
-- ✅ **Pan & Zoom**: Navigate large canvases easily
+- ✅ **Pan Canvas**: Navigate large canvases easily
 
 ## Tech Stack
 
@@ -60,8 +60,7 @@ Open [http://localhost:3000](http://localhost:3000) to see the app.
 3. **Move Rectangles**: Drag them around
 4. **Resize**: Drag the circle handle at the bottom-right corner
 5. **Pan**: Cmd+Click and drag (or middle mouse button)
-6. **Zoom**: Scroll to zoom in/out
-7. **Collaborate**: Open the same document URL in multiple tabs or share with others!
+6. **Collaborate**: Open the same document URL in multiple tabs or share with others!
 
 ## Project Structure
 

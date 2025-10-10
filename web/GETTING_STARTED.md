@@ -162,7 +162,6 @@ The app will start at: **http://localhost:3000**
 | Move rectangle | Click and drag |
 | Resize rectangle | Drag the white circle handle |
 | Pan canvas | Cmd+Click (Mac) or Ctrl+Click (Win) + Drag |
-| Zoom in/out | Scroll wheel |
 
 ### Advanced Features
 

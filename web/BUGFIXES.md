@@ -155,6 +155,69 @@ webrtcProvider = new WebrtcProvider(documentName, ydoc, {
 
 ---
 
+### 5. ✅ Cmd+Click Pan Creates Unwanted Rectangle
+**Error:** Cmd+Click to pan also creates a rectangle when mouse is released
+
+**Root Cause:**
+- Click event fires after panning completes
+- No check to distinguish between pan action and click action
+
+**Fix:**
+- Track whether actual panning occurred (`hasPanned` state)
+- Set flag when mouse moves during pan
+- Prevent rectangle creation if panning happened
+
+```typescript
+// Added state
+const [hasPanned, setHasPanned] = useState(false)
+
+// On mouse down (start pan)
+if (e.button === 1 || (e.button === 0 && e.metaKey)) {
+  e.preventDefault()
+  setIsPanning(true)
+  setHasPanned(false) // Reset flag
+  // ...
+}
+
+// On mouse move (actual panning)
+if (!isPanning) return
+setHasPanned(true) // Mark that panning occurred
+
+// On mouse up (end pan)
+setIsPanning(false)
+setTimeout(() => setHasPanned(false), 50) // Reset after brief delay
+
+// On click (create rectangle)
+if (hasPanned) {
+  return // Don't create rectangle if we just panned
+}
+// ... create rectangle
+```
+
+**Files Changed:**
+- `components/Canvas.tsx`
+
+---
+
+### 6. ✅ Zoom Feature Removed
+**Change:** Removed scroll-to-zoom functionality (not needed for MVP)
+
+**What Was Removed:**
+- Wheel event listener for zoom
+- useEffect hook that handled zoom logic
+- Zoom instruction from status bar
+
+**Reason:**
+- Simplifies user interaction
+- Reduces complexity
+- Focus on core editing features
+
+**Files Changed:**
+- `components/Canvas.tsx` - Removed zoom handler
+- `components/StatusBar.tsx` - Removed zoom instruction
+
+---
+
 ## Current Status
 
 ### ✅ Working Features
@@ -165,9 +228,9 @@ webrtcProvider = new WebrtcProvider(documentName, ydoc, {
 - [x] Drag rectangles
 - [x] Resize rectangles  
 - [x] Pan canvas (Cmd+Click)
-- [x] Zoom (scroll wheel)
 - [x] Status bar showing sync state
 - [x] No console errors
+- [x] Clean, focused UI (zoom removed)
 
 ### ⚠️ Known Limitations
 - Hocuspocus server not connected (shows "disconnected" status)
@@ -229,7 +292,7 @@ Despite backend servers not running:
 
 1. `app/document/[id]/page.tsx` - Fixed params type
 2. `hooks/useYjs.tsx` - Fixed loading logic
-3. `components/Canvas.tsx` - Fixed wheel event handler
+3. `components/Canvas.tsx` - Fixed wheel event handler & pan-click conflict
 4. `lib/yjs-providers.ts` - Disabled WebRTC
 
 ---
@@ -239,6 +302,8 @@ Despite backend servers not running:
 All critical bugs have been fixed! The app now:
 - ✅ Loads correctly without errors
 - ✅ Works offline with IndexedDB
+- ✅ Pan doesn't create rectangles
+- ✅ Focused UI (zoom removed for simplicity)
 - ✅ Provides smooth user experience
 - ✅ Ready for backend connection
 - ✅ Zero console errors

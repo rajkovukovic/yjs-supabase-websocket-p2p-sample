@@ -201,7 +201,6 @@ npm install
 | Move rectangle | Drag it |
 | Resize rectangle | Drag corner circle |
 | Pan canvas | Cmd+Click + Drag |
-| Zoom | Scroll wheel |
 
 ## 🔄 Next Steps
 
