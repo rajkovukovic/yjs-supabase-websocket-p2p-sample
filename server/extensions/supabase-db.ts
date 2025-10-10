@@ -65,12 +65,25 @@ export const SupabaseDatabase = new Database({
       
       console.log(`[SupabaseDB] Successfully fetched document: ${documentName}`)
       
-      // Convert Buffer to Uint8Array if needed
-      if (Buffer.isBuffer(data.yjs_state)) {
-        return new Uint8Array(data.yjs_state)
+      // Supabase returns BYTEA as hex-encoded string (e.g., "\x7b2274797065...")
+      // We need to convert it to Uint8Array
+      let binaryData = data.yjs_state
+      
+      // If it's a hex string starting with \x, convert it
+      if (typeof binaryData === 'string' && binaryData.startsWith('\\x')) {
+        // Remove \x prefix and convert hex to buffer
+        const hexString = binaryData.slice(2)
+        binaryData = Buffer.from(hexString, 'hex')
+        console.log(`[SupabaseDB] Converted hex string to buffer (${binaryData.length} bytes)`)
       }
       
-      return data.yjs_state
+      // Convert Buffer to Uint8Array if needed
+      if (Buffer.isBuffer(binaryData)) {
+        return new Uint8Array(binaryData)
+      }
+      
+      // If it's already a Uint8Array or Buffer, use it
+      return binaryData
     } catch (error) {
       console.error('[SupabaseDB] Unexpected fetch error:', error)
       return null
@@ -86,11 +99,19 @@ export const SupabaseDatabase = new Database({
     
     try {
       const supabase = getSupabaseClient()
+      
+      // Convert Uint8Array to hex string for Supabase BYTEA storage
+      // Supabase requires hex format: \xHEXSTRING
+      const buffer = Buffer.from(state)
+      const hexString = '\\x' + buffer.toString('hex')
+      
+      console.log(`[SupabaseDB] Storing ${buffer.length} bytes as hex string`)
+      
       const { error } = await supabase
         .from('documents')
         .upsert({
           name: documentName,
-          yjs_state: Buffer.from(state),
+          yjs_state: hexString,
           updated_at: new Date().toISOString()
         }, {
           onConflict: 'name'

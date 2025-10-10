@@ -17,7 +17,15 @@ export function setupProviders(documentName: string, ydoc: Y.Doc) {
     name: documentName,
     document: ydoc,
     
-    // No token field - authentication is disabled on server for MVP
+    // MVP: Provide a dummy token to satisfy HocuspocusProvider v2.15.3 client-side validation
+    // The server's onAuthenticate hook accepts all connections without checking the token
+    // Any non-empty string works - using a function ensures it's available on reconnection
+    token: () => 'mvp-anonymous-access',
+    
+    // Set a very high message reconnect timeout to prevent premature disconnections
+    // This prevents the "authentication token required" warning during long sessions
+    // 3600000 ms = 1 hour
+    messageReconnectTimeout: 3600000,
     
     onSynced: ({ state }) => {
       console.log('Hocuspocus synced:', state)
@@ -28,7 +36,17 @@ export function setupProviders(documentName: string, ydoc: Y.Doc) {
     },
     
     onAuthenticationFailed: ({ reason }) => {
-      console.error('Authentication failed:', reason)
+      console.error('❌ Authentication failed:', reason)
+      console.error('Error details:', JSON.stringify(reason, null, 2))
+      console.error('This usually indicates a server-side authentication rejection')
+    },
+    
+    onClose: ({ event }) => {
+      console.warn('Connection closed:', event.code, event.reason)
+    },
+    
+    onOpen: () => {
+      console.log('✅ Connection opened successfully')
     }
   })
   

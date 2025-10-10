@@ -26,13 +26,23 @@ const server = Server.configure({
   
   /**
    * Authentication hook
-   * For MVP: Authentication is DISABLED - no onAuthenticate hook
-   * When this hook is not defined, Hocuspocus allows all connections without authentication
-   * TODO: Add proper auth in production by uncommenting below
+   * For MVP: Explicitly allow all connections without authentication
+   * In Hocuspocus v2.15+, the provider expects this hook to exist even if auth is disabled
+   * This prevents the "authentication token required" warning on the client
    */
-  // async onAuthenticate({ documentName, requestHeaders, requestParameters }) {
-  //   console.log(`[Hocuspocus] Auth request for document: ${documentName}`)
-  //   
+  async onAuthenticate() {
+    // Allow all connections - no authentication required for MVP
+    // Simply return without checking any tokens
+    return {
+      user: {
+        id: 'anonymous-' + Math.random().toString(36).substr(2, 9),
+        name: 'Anonymous User'
+      }
+    }
+  },
+  
+  // Production authentication example (uncomment when needed):
+  // async onAuthenticate({ requestHeaders, requestParameters }) {
   //   const token = requestHeaders.authorization?.split(' ')[1] || requestParameters.token
   //   
   //   if (!token) {
@@ -58,8 +68,14 @@ const server = Server.configure({
    * Called when a document is loaded into memory
    */
   async onLoadDocument({ documentName, document }) {
-    console.log(`[Hocuspocus] Document loaded: ${documentName}`)
-    console.log(`[Hocuspocus] Document has ${document.getArray('rectangles').length} rectangles`)
+    try {
+      console.log(`[Hocuspocus] Document loaded: ${documentName}`)
+      const rectangles = document.getArray('rectangles')
+      console.log(`[Hocuspocus] Document has ${rectangles.length} rectangles`)
+    } catch (error: any) {
+      console.error(`[onLoadDocument] Error:`, error?.message || error)
+      console.error(`[onLoadDocument] Full error:`, error)
+    }
   },
   
   /**
