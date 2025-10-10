@@ -8,7 +8,7 @@ import { Rectangle as RectangleType } from '../types'
 
 interface RectangleProps extends RectangleType {
   isSelected?: boolean
-  onSelect?: () => void
+  onSelect?: (id: string, isMultiSelect: boolean) => void
   scale?: number
 }
 
@@ -54,7 +54,8 @@ export function Rectangle(props: RectangleProps) {
 
     // Select rectangle when clicked
     if (props.onSelect) {
-      props.onSelect()
+      const isMultiSelect = e.shiftKey
+      props.onSelect(props.id, isMultiSelect)
     }
 
     setIsDragging(true)

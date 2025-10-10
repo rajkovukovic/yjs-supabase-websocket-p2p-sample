@@ -561,7 +561,22 @@ function CanvasContent({
               key={rect.id}
               {...rect}
               isSelected={snap.selectedRectangleIds.includes(rect.id)}
-              onSelect={() => actions.setSelectedRectangle(rect.id)}
+              onSelect={(id, isMultiSelect) => {
+                if (isMultiSelect) {
+                  // Shift+Click: toggle selection
+                  const isCurrentlySelected = snap.selectedRectangleIds.includes(id)
+                  if (isCurrentlySelected) {
+                    // Remove from selection
+                    actions.setSelectedRectangle(snap.selectedRectangleIds.filter(selectedId => selectedId !== id))
+                  } else {
+                    // Add to selection
+                    actions.setSelectedRectangle([...snap.selectedRectangleIds, id])
+                  }
+                } else {
+                  // Regular click: select only this rectangle
+                  actions.setSelectedRectangle(id)
+                }
+              }}
               scale={transformState.scale}
             />
           ))}
