@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext } from 'react'
 import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useSnapshot } from 'valtio'
 import {
   TransformWrapper,
@@ -37,6 +38,7 @@ function CanvasContent({
   isCreateRectangleMode: boolean
   setIsCreateRectangleMode: (value: boolean) => void
 }) {
+  const router = useRouter()
   const { transformState } = useTransformContext();
   const { zoomIn, zoomOut, resetTransform, setTransform } = useControls();
   const snap = useSnapshot(documentState)
@@ -352,6 +354,17 @@ function CanvasContent({
 
   return (
     <CoordinateContext.Provider value={{ getSVGPoint }}>
+      {/* Back Button - Top Left */}
+      <button
+        onClick={() => router.push('/')}
+        className="fixed top-6 left-6 z-20 bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-lg border border-gray-200/50 hover:bg-gray-50 transition-colors"
+        title="Back to Home"
+      >
+        <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+
       {/* Zoom Controls and Status - Bottom Left */}
       <div className="fixed bottom-6 left-6 z-20 flex items-center gap-3 bg-white/95 backdrop-blur-sm px-4 py-2.5 rounded-xl shadow-lg border border-gray-200/50">
         {/* Sync Status */}
