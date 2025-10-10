@@ -8,6 +8,7 @@ import { Rectangle as RectangleType } from '../types'
 interface RectangleProps extends RectangleType {
   isSelected?: boolean
   onSelect?: () => void
+  scale?: number
 }
 
 export function Rectangle(props: RectangleProps) {
@@ -110,6 +111,10 @@ export function Rectangle(props: RectangleProps) {
     }
   }, [isDragging, isResizing, handleMouseMove])
   
+  // Calculate inverse scale for consistent visual size
+  const handleSize = (props.scale || 1) > 0 ? 6 / (props.scale || 1) : 6
+  const strokeWidth = (props.scale || 1) > 0 ? 2 / (props.scale || 1) : 2
+  
   return (
     <g>
       <rect
@@ -125,17 +130,19 @@ export function Rectangle(props: RectangleProps) {
         onMouseDown={handleMouseDown}
       />
       
-      {/* Resize handle (SE corner) */}
-      <circle
-        cx={props.x + props.width}
-        cy={props.y + props.height}
-        r={6}
-        fill="white"
-        stroke="#000"
-        strokeWidth={2}
-        style={{ cursor: 'se-resize' }}
-        onMouseDown={handleResizeMouseDown}
-      />
+      {/* Resize handle (SE corner) - size inversely scaled to stay consistent */}
+      {props.isSelected && (
+        <circle
+          cx={props.x + props.width}
+          cy={props.y + props.height}
+          r={handleSize}
+          fill="white"
+          stroke="#2563eb"
+          strokeWidth={strokeWidth}
+          style={{ cursor: 'se-resize' }}
+          onMouseDown={handleResizeMouseDown}
+        />
+      )}
     </g>
   )
 }

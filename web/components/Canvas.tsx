@@ -1,25 +1,19 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSnapshot } from 'valtio'
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
 import { documentState, actions } from '../store/document'
 import { useYDoc } from '../hooks/useYjs'
 import { Rectangle } from './Rectangle'
-import { ViewBox } from '../types'
 
 export function Canvas() {
-  const snap = useSnapshot(documentState) // Auto-subscribes to changes
+  const snap = useSnapshot(documentState)
   const ydoc = useYDoc()
   
-  const [viewBox, setViewBox] = useState<ViewBox>({
-    x: 0, y: 0, width: 1000, height: 1000
-  })
-  const [isPanning, setIsPanning] = useState(false)
-  const [hasPanned, setHasPanned] = useState(false)
-  const [panStart, setPanStart] = useState({ x: 0, y: 0 })
-  const [isSpacePressed, setIsSpacePressed] = useState(false)
-  
   const svgRef = useRef<SVGSVGElement>(null)
+  const [isSpacePressed, setIsSpacePressed] = useState(false)
+  const [isPanning, setIsPanning] = useState(false)
   
   // Keyboard handlers
   useEffect(() => {
@@ -40,7 +34,6 @@ export function Canvas() {
       if (e.code === 'Space') {
         e.preventDefault()
         setIsSpacePressed(false)
-        setIsPanning(false)
       }
     }
     
@@ -53,44 +46,9 @@ export function Canvas() {
     }
   }, [isSpacePressed, snap.selectedRectangleId, ydoc])
   
-  // Pan handler
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button === 0 && isSpacePressed) { // Space + Click
-      e.preventDefault()
-      setIsPanning(true)
-      setHasPanned(false)
-      setPanStart({ x: e.clientX, y: e.clientY })
-    }
-  }
-  
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isPanning) return
-    
-    // Mark that we've actually panned (mouse moved)
-    setHasPanned(true)
-    
-    const dx = (e.clientX - panStart.x) * (viewBox.width / window.innerWidth)
-    const dy = (e.clientY - panStart.y) * (viewBox.height / window.innerHeight)
-    
-    setViewBox(prev => ({
-      ...prev,
-      x: prev.x - dx,
-      y: prev.y - dy
-    }))
-    
-    setPanStart({ x: e.clientX, y: e.clientY })
-  }, [isPanning, panStart, viewBox])
-  
-  const handleMouseUp = () => {
-    setIsPanning(false)
-    // Keep hasPanned state for a brief moment to prevent click event
-    setTimeout(() => setHasPanned(false), 50)
-  }
-  
-  // Click to add rectangle or deselect
-  const handleCanvasClick = (e: React.MouseEvent<SVGSVGElement>) => {
-    // Don't create rectangle if we just panned
-    if (hasPanned) {
+  // Handle click to add rectangle or deselect
+  const handleCanvasClick = (e: React.MouseEvent<SVGSVGElement>, scale: number, positionX: number, positionY: number) => {
+    if (isPanning) {
       return
     }
     
@@ -103,9 +61,10 @@ export function Canvas() {
         return
       }
       
-      const rect = svgRef.current!.getBoundingClientRect()
-      const x = ((e.clientX - rect.left) / rect.width) * viewBox.width + viewBox.x
-      const y = ((e.clientY - rect.top) / rect.height) * viewBox.height + viewBox.y
+              // Calculate position in SVG coordinates accounting for zoom and pan
+              const rect = svgRef.current!.getBoundingClientRect()
+              const x = (e.clientX - rect.left - (positionX || 0)) / (scale || 1)
+              const y = (e.clientY - rect.top - (positionY || 0)) / (scale || 1)
       
       actions.addRectangle(ydoc, {
         id: crypto.randomUUID(),
@@ -121,38 +80,113 @@ export function Canvas() {
   }
   
   return (
-    <svg
-      ref={svgRef}
-      viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
-      style={{ 
-        width: '100%', 
-        height: '100%', 
-        cursor: isPanning ? 'grabbing' : isSpacePressed ? 'grab' : 'default',
-        background: '#f5f5f5'
+    <TransformWrapper
+      initialScale={1}
+      minScale={0.1}
+      maxScale={10}
+      limitToBounds={false}
+      centerOnInit={false}
+      wheel={{
+        step: 0.1,
+        smoothStep: 0.005
       }}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      onClick={handleCanvasClick}
+      pinch={{
+        step: 5
+      }}
+      panning={{
+        disabled: !isSpacePressed,
+        velocityDisabled: false
+      }}
+      doubleClick={{
+        disabled: true
+      }}
+      onPanningStart={() => setIsPanning(true)}
+      onPanningStop={() => setTimeout(() => setIsPanning(false), 50)}
     >
-      <defs>
-        <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
-          <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#e0e0e0" strokeWidth="1"/>
-        </pattern>
-      </defs>
-      
-      <rect id="background" width="100%" height="100%" fill="url(#grid)" />
-      
-      {snap.rectangles.map(rect => (
-        <Rectangle 
-          key={rect.id} 
-          {...rect} 
-          isSelected={snap.selectedRectangleId === rect.id}
-          onSelect={() => actions.setSelectedRectangle(rect.id)}
-        />
-      ))}
-    </svg>
+      {({ zoomIn, zoomOut, resetTransform, state }) => (
+        <>
+          {/* Zoom Controls */}
+          <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
+            <button
+              onClick={() => zoomIn()}
+              className="bg-white hover:bg-gray-100 p-2 rounded shadow-md transition-colors"
+              title="Zoom In (Scroll Up)"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
+            <button
+              onClick={() => zoomOut()}
+              className="bg-white hover:bg-gray-100 p-2 rounded shadow-md transition-colors"
+              title="Zoom Out (Scroll Down)"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+              </svg>
+            </button>
+            <button
+              onClick={() => resetTransform()}
+              className="bg-white hover:bg-gray-100 p-2 rounded shadow-md transition-colors"
+              title="Reset View"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+            </button>
+            <div className="bg-white px-2 py-1 rounded shadow-md text-xs text-gray-600">
+              {Math.round((state?.scale || 1) * 100)}%
+            </div>
+          </div>
+
+          {/* Instructions */}
+          <div className="absolute bottom-4 left-4 z-10 bg-white/90 px-3 py-2 rounded shadow-md text-sm text-gray-600">
+            <div className="font-semibold mb-1">Controls:</div>
+            <div>• Scroll/Pinch to zoom</div>
+            <div>• Space + Drag to pan</div>
+            <div>• Click to add rectangle</div>
+            <div>• Delete/Backspace to remove</div>
+          </div>
+          
+          <TransformComponent
+            wrapperStyle={{
+              width: '100%',
+              height: '100%',
+              cursor: isPanning ? 'grabbing' : isSpacePressed ? 'grab' : 'default'
+            }}
+          >
+            <svg
+              ref={svgRef}
+              width={2000}
+              height={2000}
+              style={{ 
+                background: '#f5f5f5',
+                touchAction: 'none' // Prevents default touch behaviors
+              }}
+              onClick={(e) => handleCanvasClick(e, state?.scale || 1, state?.positionX || 0, state?.positionY || 0)}
+            >
+              <defs>
+                <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+                  <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#e0e0e0" strokeWidth="1"/>
+                </pattern>
+              </defs>
+              
+              <rect id="background" width="100%" height="100%" fill="url(#grid)" />
+              
+              {snap.rectangles.map(rect => (
+                <Rectangle 
+                  key={rect.id} 
+                  {...rect} 
+                  isSelected={snap.selectedRectangleId === rect.id}
+                  onSelect={() => actions.setSelectedRectangle(rect.id)}
+                  scale={state?.scale || 1}
+                />
+              ))}
+            </svg>
+          </TransformComponent>
+        </>
+      )}
+    </TransformWrapper>
   )
 }
 
