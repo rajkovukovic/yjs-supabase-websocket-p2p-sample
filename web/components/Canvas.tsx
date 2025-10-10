@@ -85,7 +85,7 @@ export function Canvas() {
       viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
       style={{ 
         width: '100%', 
-        height: '100vh', 
+        height: '100%', 
         cursor: isPanning ? 'grabbing' : 'default',
         background: '#f5f5f5'
       }}
