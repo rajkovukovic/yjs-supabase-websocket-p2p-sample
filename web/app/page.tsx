@@ -122,7 +122,7 @@ export default function HomePage() {
     <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-0 md:p-8">
       <div className="max-w-5xl mx-auto h-full">
         {/* Documents List */}
-        <div className="bg-white md:rounded-3xl md:shadow-2xl overflow-hidden h-full border border-gray-100 flex flex-col">
+        <div className="bg-white md:rounded-3xl md:shadow-2xl overflow-hidden h-full flex flex-col">
           {/* Header with All Documents + Plus button */}
           <div className="p-8 bg-gradient-to-r from-blue-600 to-indigo-600">
             <div className="flex items-center justify-between">
@@ -199,9 +199,9 @@ export default function HomePage() {
                     key={doc.id}
                     className="relative group"
                   >
-                    <button
+                    <div
                       onClick={() => handleDocumentClick(doc.name)}
-                      className="w-full text-left p-5 bg-white border border-gray-200 rounded-xl hover:border-blue-400 hover:shadow-md transition-all duration-200 hover:scale-[1.01]"
+                      className="w-full text-left p-5 bg-white border border-gray-200 rounded-xl hover:border-blue-400 hover:shadow-md transition-all duration-200 hover:scale-[1.01] cursor-pointer"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0 pr-4">
@@ -237,20 +237,20 @@ export default function HomePage() {
                           )}
                         </div>
                         <div className="flex items-center gap-2">
-                          <button
-                            onClick={(e) => handleDeleteClick(e, doc.id)}
-                            className="opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200"
-                            title="Delete document"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
                           <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
                         </div>
                       </div>
+                    </div>
+                    <button
+                      onClick={(e) => handleDeleteClick(e, doc.id)}
+                      className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200 z-10"
+                      title="Delete document"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
                     </button>
                   </div>
                 ))}
