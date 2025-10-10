@@ -38,7 +38,7 @@ function CanvasContent({
   setIsCreateRectangleMode: (value: boolean) => void
 }) {
   const { transformState } = useTransformContext();
-  const { zoomIn, zoomOut, resetTransform } = useControls();
+  const { zoomIn, zoomOut, resetTransform, setTransform } = useControls();
   const snap = useSnapshot(documentState)
   const ydoc = useYDoc()
 
@@ -48,6 +48,9 @@ function CanvasContent({
   const [drawingRectangle, setDrawingRectangle] = useState<{x: number, y: number, width: number, height: number} | null>(null)
   const [dragStart, setDragStart] = useState<{x: number, y: number} | null>(null)
   const [touchStart, setTouchStart] = useState<{x: number, y: number} | null>(null)
+  const [selectionBox, setSelectionBox] = useState<{x: number, y: number, width: number, height: number} | null>(null)
+  const [selectionStart, setSelectionStart] = useState<{x: number, y: number} | null>(null)
+  const [panStart, setPanStart] = useState<{x: number, y: number} | null>(null)
 
   const getSVGPoint = (clientX: number, clientY: number) => {
     const svg = svgRef.current
@@ -71,12 +74,24 @@ function CanvasContent({
     return { x, y }
   }
 
+  // Helper function to check if two rectangles intersect
+  const rectanglesIntersect = (rect1: {x: number, y: number, width: number, height: number}, rect2: {x: number, y: number, width: number, height: number}) => {
+    return !(rect1.x + rect1.width < rect2.x ||
+             rect2.x + rect2.width < rect1.x ||
+             rect1.y + rect1.height < rect2.y ||
+             rect2.y + rect2.height < rect1.y)
+  }
+
   // Reset drawing state when exiting create mode
   useEffect(() => {
     if (!isCreateRectangleMode) {
       setDrawingRectangle(null)
       setDragStart(null)
       setTouchStart(null)
+      setSelectionBox(null)
+      setSelectionStart(null)
+      setPanStart(null)
+      setIsPanning(false)
     }
   }, [isCreateRectangleMode])
 
@@ -169,6 +184,10 @@ function CanvasContent({
         setIsCreateRectangleMode(false)
         setDrawingRectangle(null)
         setDragStart(null)
+        setSelectionBox(null)
+        setSelectionStart(null)
+        setPanStart(null)
+        setIsPanning(false)
       }
     }
 
@@ -188,74 +207,135 @@ function CanvasContent({
     }
   }, [isSpacePressed, snap.selectedRectangleId, isCreateRectangleMode, ydoc, dragStart, drawingRectangle, setIsCreateRectangleMode])
 
-  // Handle mouse down for rectangle creation or selection
+  // Handle mouse down for rectangle creation, selection, or panning
   const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (isPanning || isSpacePressed) {
+    if (isPanning) {
       return
     }
 
-    const { x, y } = getSVGPoint(e.clientX, e.clientY)
-
-    if (isCreateRectangleMode) {
+    if (isSpacePressed) {
+      // Start manual panning
+      setIsPanning(true)
+      setPanStart({ x: e.clientX, y: e.clientY })
+      e.preventDefault()
+    } else if (isCreateRectangleMode) {
       // Start drawing rectangle
+      const { x, y } = getSVGPoint(e.clientX, e.clientY)
       setDragStart({ x, y })
       setDrawingRectangle({ x, y, width: 0, height: 0 })
     } else if (e.target === svgRef.current || (e.target as SVGElement).id === 'background') {
-      // Deselect if clicking on background
-      actions.setSelectedRectangle(null)
+      // Start selection box if clicking on background
+      const { x, y } = getSVGPoint(e.clientX, e.clientY)
+      setSelectionStart({ x, y })
+      setSelectionBox({ x, y, width: 0, height: 0 })
+      // Don't deselect immediately - wait for mouseup to see if it was just a click
     }
   }
 
-  // Handle mouse move for rectangle drawing
+  // Handle mouse move for rectangle drawing, selection, or panning
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (!isCreateRectangleMode || !dragStart || isPanning || isSpacePressed) {
+    if (isPanning && panStart) {
+      // Handle manual panning
+      const deltaX = e.clientX - panStart.x
+      const deltaY = e.clientY - panStart.y
+
+      setTransform(
+        transformState.positionX + deltaX,
+        transformState.positionY + deltaY,
+        transformState.scale,
+        0 // No animation for smooth panning
+      )
+
+      setPanStart({ x: e.clientX, y: e.clientY })
+      e.preventDefault()
+    } else if (isSpacePressed) {
+      // Space is pressed but not panning yet, ignore
       return
+    } else {
+      // Handle rectangle drawing or selection
+      const { x: currentX, y: currentY } = getSVGPoint(e.clientX, e.clientY)
+
+      if (isCreateRectangleMode && dragStart) {
+        // Update drawing rectangle
+        const width = currentX - dragStart.x
+        const height = currentY - dragStart.y
+
+        setDrawingRectangle({
+          x: width < 0 ? currentX : dragStart.x,
+          y: height < 0 ? currentY : dragStart.y,
+          width: Math.abs(width),
+          height: Math.abs(height)
+        })
+      } else if (!isCreateRectangleMode && selectionStart) {
+        // Update selection box
+        const width = currentX - selectionStart.x
+        const height = currentY - selectionStart.y
+
+        setSelectionBox({
+          x: width < 0 ? currentX : selectionStart.x,
+          y: height < 0 ? currentY : selectionStart.y,
+          width: Math.abs(width),
+          height: Math.abs(height)
+        })
+      }
     }
-
-    // Calculate current position in SVG coordinates
-    const { x: currentX, y: currentY } = getSVGPoint(e.clientX, e.clientY)
-
-    // Update drawing rectangle
-    const width = currentX - dragStart.x
-    const height = currentY - dragStart.y
-
-    setDrawingRectangle({
-      x: width < 0 ? currentX : dragStart.x,
-      y: height < 0 ? currentY : dragStart.y,
-      width: Math.abs(width),
-      height: Math.abs(height)
-    })
   }
 
-  // Handle mouse up to complete rectangle creation
+  // Handle mouse up to complete rectangle creation, selection, or panning
   const handleMouseUp = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (!isCreateRectangleMode || !dragStart) {
-      return
+    if (isPanning) {
+      // Stop manual panning
+      setIsPanning(false)
+      setPanStart(null)
+    } else if (isCreateRectangleMode && dragStart) {
+      // Complete rectangle creation
+      const { x: currentX, y: currentY } = getSVGPoint(e.clientX, e.clientY)
+
+      const width = currentX - dragStart.x
+      const height = currentY - dragStart.y
+
+      // Only create rectangle if it has meaningful size (more than 5px in each dimension)
+      if (Math.abs(width) > 5 && Math.abs(height) > 5) {
+        actions.addRectangle(ydoc, {
+          id: crypto.randomUUID(),
+          x: width < 0 ? currentX : dragStart.x,
+          y: height < 0 ? currentY : dragStart.y,
+          width: Math.abs(width),
+          height: Math.abs(height),
+          fill: `hsl(${Math.random() * 360}, 70%, 60%)`,
+          stroke: '#000',
+          strokeWidth: 2
+        })
+      }
+
+      // Reset drawing state
+      setDrawingRectangle(null)
+      setDragStart(null)
+    } else if (!isCreateRectangleMode && selectionStart && selectionBox) {
+      // Complete selection
+      const minSize = 5 // Minimum size to be considered a selection rather than a click
+
+      if (selectionBox.width > minSize && selectionBox.height > minSize) {
+        // Find rectangles that intersect with selection box
+        const selectedIds = snap.rectangles
+          .filter(rect => rectanglesIntersect(selectionBox, rect))
+          .map(rect => rect.id)
+
+        // For now, select the first one found (could be extended to multi-select)
+        if (selectedIds.length > 0) {
+          actions.setSelectedRectangle(selectedIds[0])
+        } else {
+          actions.setSelectedRectangle(null)
+        }
+      } else {
+        // It was just a click, deselect everything
+        actions.setSelectedRectangle(null)
+      }
+
+      // Reset selection state
+      setSelectionBox(null)
+      setSelectionStart(null)
     }
-
-    // Calculate final position in SVG coordinates
-    const { x: currentX, y: currentY } = getSVGPoint(e.clientX, e.clientY)
-
-    const width = currentX - dragStart.x
-    const height = currentY - dragStart.y
-
-    // Only create rectangle if it has meaningful size (more than 5px in each dimension)
-    if (Math.abs(width) > 5 && Math.abs(height) > 5) {
-      actions.addRectangle(ydoc, {
-        id: crypto.randomUUID(),
-        x: width < 0 ? currentX : dragStart.x,
-        y: height < 0 ? currentY : dragStart.y,
-        width: Math.abs(width),
-        height: Math.abs(height),
-        fill: `hsl(${Math.random() * 360}, 70%, 60%)`,
-        stroke: '#000',
-        strokeWidth: 2
-      })
-    }
-
-    // Reset drawing state
-    setDrawingRectangle(null)
-    setDragStart(null)
   }
 
   return (
@@ -294,6 +374,10 @@ function CanvasContent({
             setIsCreateRectangleMode(!isCreateRectangleMode)
             setDrawingRectangle(null)
             setDragStart(null)
+            setSelectionBox(null)
+            setSelectionStart(null)
+            setPanStart(null)
+            setIsPanning(false)
           }}
           className={`p-2 rounded shadow-md transition-colors ${
             isCreateRectangleMode
@@ -323,6 +407,7 @@ function CanvasContent({
           </>
         ) : (
           <>
+            <div>• Drag to select rectangles</div>
             <div>• Click to deselect</div>
             <div>• Click rectangle button for create mode</div>
           </>
@@ -387,6 +472,23 @@ function CanvasContent({
               }}
             />
           )}
+
+          {/* Selection box */}
+          {selectionBox && !isCreateRectangleMode && (
+            <rect
+              x={selectionBox.x}
+              y={selectionBox.y}
+              width={selectionBox.width}
+              height={selectionBox.height}
+              fill="rgba(59, 130, 246, 0.1)"
+              stroke="#3b82f6"
+              strokeWidth="1"
+              strokeDasharray="3,3"
+              style={{
+                pointerEvents: 'none'
+              }}
+            />
+          )}
         </svg>
       </TransformComponent>
     </CoordinateContext.Provider>
@@ -417,14 +519,12 @@ export function Canvas() {
         step: 5
       }}
       panning={{
-        disabled: isCreateRectangleMode,
+        disabled: true, // Disable library panning, we'll handle it manually
         velocityDisabled: false
       }}
       doubleClick={{
         disabled: true,
       }}
-      onPanningStart={() => setIsPanning(true)}
-      onPanningStop={() => setTimeout(() => setIsPanning(false), 50)}
     >
       <CanvasContent isCreateRectangleMode={isCreateRectangleMode} setIsCreateRectangleMode={setIsCreateRectangleMode} />
     </TransformWrapper>
