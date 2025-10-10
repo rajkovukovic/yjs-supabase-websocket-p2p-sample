@@ -28,23 +28,20 @@ export function setupProviders(documentName: string, ydoc: Y.Doc) {
     }
   })
   
-  // 3. WebRTC (peer-to-peer) - Use local signaling server
-  const webrtcProvider = new WebrtcProvider(documentName, ydoc, {
-    // Use local signaling server (from docker-compose)
-    signaling: [
-      process.env.NEXT_PUBLIC_SIGNALING_URL || 'ws://localhost:4444'
-    ],
-    
-    // Awareness for cursor sharing
+  // 3. WebRTC (peer-to-peer) - DISABLED FOR MVP
+  // WebRTC is optional and not required when using Hocuspocus
+  // To enable WebRTC, you need a compatible signaling server
+  // (not Socket.IO - requires y-webrtc's WebSocket protocol)
+  // For now, we rely on Hocuspocus for all real-time sync
+  let webrtcProvider: any = null
+  
+  // Uncomment to enable WebRTC with custom signaling server:
+  /*
+  webrtcProvider = new WebrtcProvider(documentName, ydoc, {
+    signaling: ['ws://your-signaling-server:port'],
     awareness: hocuspocusProvider.awareness,
-    
-    // Max connections
     maxConns: 20,
-    
-    // Filter connections (optional)
     filterBcConns: true,
-    
-    // STUN servers for WebRTC
     peerOpts: {
       config: {
         iceServers: [
@@ -60,12 +57,14 @@ export function setupProviders(documentName: string, ydoc: Y.Doc) {
   })
   
   webrtcProvider.on('peers', ({ added, removed, webrtcPeers }: any) => {
+    documentState.peers = webrtcPeers.length
     console.log('P2P peers:', {
       added,
       removed,
       total: webrtcPeers.length
     })
   })
+  */
   
   return {
     indexeddbProvider,
@@ -75,7 +74,9 @@ export function setupProviders(documentName: string, ydoc: Y.Doc) {
     destroy: () => {
       indexeddbProvider.destroy()
       hocuspocusProvider.destroy()
-      webrtcProvider.destroy()
+      if (webrtcProvider) {
+        webrtcProvider.destroy()
+      }
     }
   }
 }

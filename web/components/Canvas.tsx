@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSnapshot } from 'valtio'
 import { documentState, actions } from '../store/document'
 import { useYDoc } from '../hooks/useYjs'
@@ -44,28 +44,41 @@ export function Canvas() {
   
   const handleMouseUp = () => setIsPanning(false)
   
-  // Zoom handler
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault()
+  // Zoom handler (using useEffect for non-passive event listener)
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      
+      const scaleFactor = e.deltaY > 0 ? 1.1 : 0.9
+      const newWidth = viewBox.width * scaleFactor
+      const newHeight = viewBox.height * scaleFactor
+      
+      // Zoom towards mouse position
+      const rect = svgRef.current!.getBoundingClientRect()
+      const mouseX = e.clientX - rect.left
+      const mouseY = e.clientY - rect.top
+      const mouseXRatio = mouseX / rect.width
+      const mouseYRatio = mouseY / rect.height
+      
+      setViewBox({
+        x: viewBox.x - (newWidth - viewBox.width) * mouseXRatio,
+        y: viewBox.y - (newHeight - viewBox.height) * mouseYRatio,
+        width: newWidth,
+        height: newHeight
+      })
+    }
     
-    const scaleFactor = e.deltaY > 0 ? 1.1 : 0.9
-    const newWidth = viewBox.width * scaleFactor
-    const newHeight = viewBox.height * scaleFactor
+    const svgElement = svgRef.current
+    if (svgElement) {
+      svgElement.addEventListener('wheel', handleWheel, { passive: false })
+    }
     
-    // Zoom towards mouse position
-    const rect = svgRef.current!.getBoundingClientRect()
-    const mouseX = e.clientX - rect.left
-    const mouseY = e.clientY - rect.top
-    const mouseXRatio = mouseX / rect.width
-    const mouseYRatio = mouseY / rect.height
-    
-    setViewBox({
-      x: viewBox.x - (newWidth - viewBox.width) * mouseXRatio,
-      y: viewBox.y - (newHeight - viewBox.height) * mouseYRatio,
-      width: newWidth,
-      height: newHeight
-    })
-  }
+    return () => {
+      if (svgElement) {
+        svgElement.removeEventListener('wheel', handleWheel)
+      }
+    }
+  }, [viewBox])
   
   // Click to add rectangle
   const handleCanvasClick = (e: React.MouseEvent<SVGSVGElement>) => {
@@ -101,7 +114,6 @@ export function Canvas() {
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
-      onWheel={handleWheel}
       onClick={handleCanvasClick}
     >
       <defs>

@@ -15,7 +15,7 @@ export function YjsProvider({
   children: React.ReactNode 
 }) {
   const [ydoc] = useState(() => new Y.Doc())
-  const [synced, setSynced] = useState(false)
+  const [ready, setReady] = useState(false)
   
   useEffect(() => {
     const providers = setupProviders(documentName, ydoc)
@@ -23,28 +23,40 @@ export function YjsProvider({
     // Sync Yjs to Valtio
     const unsyncYjs = syncYjsToValtio(ydoc)
     
-    // Track sync status
+    // Show UI as soon as IndexedDB loads (don't wait for network)
+    providers.indexeddbProvider.on('synced', () => {
+      setReady(true)
+    })
+    
+    // Also set ready after a short timeout as fallback
+    const timeout = setTimeout(() => {
+      setReady(true)
+    }, 1000)
+    
+    // Track sync status for Hocuspocus
     providers.hocuspocusProvider.on('synced', () => {
       documentState.synced = true
-      setSynced(true)
     })
     
     providers.hocuspocusProvider.on('status', ({ status }: { status: any }) => {
       documentState.status = status
     })
     
-    // Track peers
-    providers.webrtcProvider.on('peers', ({ webrtcPeers }: any) => {
-      documentState.peers = webrtcPeers.length
-    })
+    // Track peers (WebRTC is optional)
+    if (providers.webrtcProvider) {
+      providers.webrtcProvider.on('peers', ({ webrtcPeers }: any) => {
+        documentState.peers = webrtcPeers.length
+      })
+    }
     
     return () => {
+      clearTimeout(timeout)
       unsyncYjs()
       providers.destroy()
     }
   }, [documentName, ydoc])
   
-  if (!synced) {
+  if (!ready) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-50">
         <div className="text-center">

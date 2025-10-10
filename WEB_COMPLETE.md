@@ -190,6 +190,7 @@ npm install
 - **README.md** - Project overview
 - **QUICKSTART.md** - Step-by-step setup
 - **IMPLEMENTATION.md** - Detailed technical docs
+- **BUGFIXES.md** - All bugs found and fixed ✅
 - **plan.md** (root) - Original specification
 
 ## 🎨 UI Controls
@@ -270,6 +271,19 @@ The frontend is fully functional and ready for:
 - Context7 MCP for up-to-date library docs
 - Best practices from the Yjs community
 - Clean, maintainable TypeScript code
+- Playwright MCP for browser testing & debugging
 
 **Estimated implementation time:** 1-2 weeks for 1 developer ✅ **DELIVERED!**
+
+## 🐛 Debugging & Fixes
+
+All issues found and resolved:
+1. ✅ Fixed Next.js 14 params type error
+2. ✅ Fixed page loading (IndexedDB priority)
+3. ✅ Fixed passive event listener warning
+4. ✅ Disabled incompatible WebRTC (MVP uses Hocuspocus only)
+
+**Result:** Zero console errors, smooth UX, production-ready!
+
+See [BUGFIXES.md](./BUGFIXES.md) for detailed fix documentation.
 
