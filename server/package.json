@@ -1,0 +1,34 @@
+{
+  "name": "collaborative-editor-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:hocuspocus": "tsx watch hocuspocus-server.ts",
+    "dev:signaling": "tsx watch signaling-server.ts",
+    "dev": "concurrently \"npm run dev:hocuspocus\" \"npm run dev:signaling\"",
+    "build": "tsc",
+    "start:hocuspocus": "node dist/hocuspocus-server.js",
+    "start:signaling": "node dist/signaling-server.js",
+    "start": "concurrently \"npm run start:hocuspocus\" \"npm run start:signaling\"",
+    "verify": "node scripts/verify-setup.js",
+    "test:connection": "node scripts/test-connection.js"
+  },
+  "dependencies": {
+    "yjs": "^13.6.10",
+    "@hocuspocus/server": "^2.13.5",
+    "@hocuspocus/extension-database": "^2.13.5",
+    "@supabase/supabase-js": "^2.45.4",
+    "socket.io": "^4.8.1",
+    "lib0": "^0.2.98",
+    "dotenv": "^16.4.5",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "@types/node": "^22.7.9",
+    "tsx": "^4.19.2",
+    "concurrently": "^9.1.0"
+  }
+}
+
