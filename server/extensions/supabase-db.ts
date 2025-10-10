@@ -131,6 +131,37 @@ export const SupabaseDatabase = new Database({
 })
 
 /**
+ * Ensure document exists in database (for foreign key constraint)
+ * This creates an empty document row if it doesn't exist
+ */
+export async function ensureDocumentExists(documentName: string) {
+  try {
+    const supabase = getSupabaseClient()
+    
+    const { error } = await supabase
+      .from('documents')
+      .upsert({
+        name: documentName,
+        yjs_state: null,
+        metadata: {},
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'name',
+        ignoreDuplicates: true // Don't update if already exists
+      })
+    
+    if (error) {
+      console.error(`[SupabaseDB] Error ensuring document exists:`, error)
+    } else {
+      console.log(`[SupabaseDB] Document ${documentName} exists in database`)
+    }
+  } catch (error) {
+    console.error(`[SupabaseDB] Unexpected error ensuring document exists:`, error)
+  }
+}
+
+/**
  * Store incremental updates for audit/replay purposes
  * This is optional but useful for debugging and history
  */
@@ -141,15 +172,23 @@ export async function storeUpdate(
 ) {
   try {
     const supabase = getSupabaseClient()
+    
     // Decode clock from update for tracking
     const decoder = new decoding.Decoder(update)
     const clock = decoding.readVarUint(decoder)
+    
+    // Convert Uint8Array to hex string for Supabase BYTEA storage
+    // Same format as the main store function
+    const buffer = Buffer.from(update)
+    const hexString = '\\x' + buffer.toString('hex')
+    
+    console.log(`[SupabaseDB] Storing update for ${documentName} (${buffer.length} bytes, clock: ${clock})`)
     
     const { error } = await supabase
       .from('document_updates')
       .insert({
         document_name: documentName,
-        update: Buffer.from(update),
+        update: hexString,
         client_id: clientId.toString(),
         clock: clock,
         created_at: new Date().toISOString()
@@ -157,6 +196,9 @@ export async function storeUpdate(
     
     if (error) {
       console.error('[SupabaseDB] Update store error:', error)
+      console.error('[SupabaseDB] Error details:', JSON.stringify(error, null, 2))
+    } else {
+      console.log(`[SupabaseDB] Successfully stored update for ${documentName}`)
     }
   } catch (error) {
     console.error('[SupabaseDB] Unexpected update store error:', error)

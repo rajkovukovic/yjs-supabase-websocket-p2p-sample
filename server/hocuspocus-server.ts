@@ -1,7 +1,8 @@
 // Load config FIRST - this initializes environment variables
 import { config } from './config.js'
 import { Server } from '@hocuspocus/server'
-import { SupabaseDatabase, storeUpdate } from './extensions/supabase-db.js'
+import { SupabaseDatabase } from './extensions/supabase-db.js'
+import { UpdateTracker } from './extensions/update-tracker.js'
 
 const PORT = config.hocuspocus.port
 const CORS_ORIGIN = config.cors.origin
@@ -21,7 +22,8 @@ const server = Server.configure({
   
   // Database extension for Supabase persistence
   extensions: [
-    SupabaseDatabase
+    SupabaseDatabase,
+    UpdateTracker  // Track individual updates for audit trail
   ],
   
   /**
@@ -80,23 +82,10 @@ const server = Server.configure({
   
   /**
    * Called when a document changes
-   * Store incremental updates for audit/debugging
+   * Note: UpdateTracker extension handles storing individual updates
    */
-  async onChange({ documentName, document, context }) {
+  async onChange({ documentName }) {
     console.log(`[Hocuspocus] Document changed: ${documentName}`)
-    
-    // Store incremental update (optional, for audit trail)
-    if (context.update) {
-      try {
-        await storeUpdate(
-          documentName,
-          context.update,
-          context.clientId || 0
-        )
-      } catch (error) {
-        console.error('[Hocuspocus] Error storing update:', error)
-      }
-    }
   },
   
   /**
