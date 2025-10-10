@@ -109,10 +109,10 @@ export function Canvas() {
       
       actions.addRectangle(ydoc, {
         id: crypto.randomUUID(),
-        x: x - 50,
-        y: y - 50,
-        width: 100,
-        height: 100,
+        x: x - 25,
+        y: y - 25,
+        width: 50,
+        height: 50,
         fill: `hsl(${Math.random() * 360}, 70%, 60%)`,
         stroke: '#000',
         strokeWidth: 2
