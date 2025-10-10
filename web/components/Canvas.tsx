@@ -2,14 +2,21 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useSnapshot } from 'valtio'
-import { TransformWrapper, TransformComponent, useTransformContext } from 'react-zoom-pan-pinch'
+import {
+  TransformWrapper,
+  TransformComponent,
+  useTransformContext,
+  ReactZoomPanPinchRef,
+  useControls,
+} from 'react-zoom-pan-pinch'
 import { documentState, actions } from '../store/document'
 import { useYDoc } from '../hooks/useYjs'
 import { Rectangle } from './Rectangle'
 
 // Separate component to use transform context
 function CanvasContent() {
-  const { transformState, instance } = useTransformContext()
+  const { transformState } = useTransformContext();
+  const { zoomIn, zoomOut, resetTransform } = useControls();
   const snap = useSnapshot(documentState)
   const ydoc = useYDoc()
 
@@ -225,7 +232,7 @@ function CanvasContent() {
       {/* Zoom Controls */}
       <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
         <button
-          onClick={() => instance.zoomIn()}
+          onClick={() => zoomIn(0.2, 300, 'easeOut')}
           className="bg-white hover:bg-gray-100 p-2 rounded shadow-md transition-colors"
           title="Zoom In (Scroll Up)"
         >
@@ -234,7 +241,7 @@ function CanvasContent() {
           </svg>
         </button>
         <button
-          onClick={() => instance.zoomOut()}
+          onClick={() => zoomOut(0.2, 300, 'easeOut')}
           className="bg-white hover:bg-gray-100 p-2 rounded shadow-md transition-colors"
           title="Zoom Out (Scroll Down)"
         >
@@ -243,7 +250,7 @@ function CanvasContent() {
           </svg>
         </button>
         <button
-          onClick={() => instance.resetTransform()}
+          onClick={() => resetTransform(300, 'easeOut')}
           className="bg-white hover:bg-gray-100 p-2 rounded shadow-md transition-colors"
           title="Reset View"
         >
@@ -360,6 +367,8 @@ export function Canvas() {
   const ydoc = useYDoc()
 
   const [isPanning, setIsPanning] = useState(false)
+  const transformRef = useRef<ReactZoomPanPinchRef>(null)
+
 
   return (
     <TransformWrapper
@@ -380,7 +389,7 @@ export function Canvas() {
         velocityDisabled: false
       }}
       doubleClick={{
-        disabled: true
+        disabled: true,
       }}
       onPanningStart={() => setIsPanning(true)}
       onPanningStop={() => setTimeout(() => setIsPanning(false), 50)}
