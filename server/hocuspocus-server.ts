@@ -94,17 +94,17 @@ const server = Server.configure({
   },
   
   /**
-   * Called when a document is destroyed (removed from memory)
+   * Called when a document is unloaded from memory
    */
-  async onDestroy({ documentName }) {
-    console.log(`[Hocuspocus] Document destroyed: ${documentName}`)
+  async afterUnloadDocument({ documentName }) {
+    console.log(`[Hocuspocus] Document unloaded: ${documentName}`)
   },
   
   /**
    * Called when a connection is established
    */
-  async onConnect({ documentName, clientsCount }) {
-    console.log(`[Hocuspocus] Client connected to ${documentName}. Total clients: ${clientsCount}`)
+  async onConnect({ documentName }) {
+    console.log(`[Hocuspocus] Client connected to ${documentName}`)
   },
   
   /**
@@ -112,13 +112,6 @@ const server = Server.configure({
    */
   async onDisconnect({ documentName, clientsCount }) {
     console.log(`[Hocuspocus] Client disconnected from ${documentName}. Remaining clients: ${clientsCount}`)
-  },
-  
-  /**
-   * Called when an error occurs
-   */
-  async onError({ documentName, error }) {
-    console.error(`[Hocuspocus] Error in document ${documentName}:`, error)
   },
   
   /**

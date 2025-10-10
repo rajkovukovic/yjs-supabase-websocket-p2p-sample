@@ -6,20 +6,31 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Enable pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Install dependencies
-RUN npm ci --production
+# Copy package files
+COPY package.json pnpm-lock.yaml ./
+
+# Install all dependencies (including dev deps for building)
+RUN pnpm install --frozen-lockfile
 
 # Builder stage
 FROM base AS builder
 WORKDIR /app
+
+# Enable pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Copy package files first
+COPY package.json pnpm-lock.yaml ./
+
+# Copy dependencies and source code
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Build TypeScript
-RUN npm run build
+RUN pnpm run build
 
 # Production image
 FROM base AS runner
