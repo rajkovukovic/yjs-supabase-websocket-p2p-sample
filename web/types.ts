@@ -25,8 +25,10 @@ export interface DocumentState {
 }
 
 export interface CursorState {
-  x: number
-  y: number
+  cursor: {
+    x: number
+    y: number
+  }
   user: {
     name: string
     color: string
