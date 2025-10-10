@@ -22,6 +22,7 @@ export interface DocumentState {
   status: 'disconnected' | 'connecting' | 'connected'
   peers: number
   selectedRectangleId: string | null
+  isCreateRectangleMode: boolean
 }
 
 export interface CursorState {
