@@ -19,8 +19,8 @@ A production-ready collaborative graphic editor built with Yjs, React, and Supab
 │   Client A  │◄──────WebRTC──────►│   Client B  │
 └──────┬──────┘                    └──────┬──────┘
        │                                  │
-       │        ┌──────────────┐         │
-       └───────►│  Hocuspocus  │◄────────┘
+       │        ┌──────────────┐          │
+       └───────►│  Hocuspocus  │◄─────────┘
                 │  (WebSocket) │
                 └──────┬───────┘
                        │
