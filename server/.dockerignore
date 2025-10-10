@@ -1,14 +1,18 @@
+# Dependencies
 node_modules
-dist
-npm-debug.log
+
+# Environment variables  
 .env
 .env.local
-.git
-.gitignore
-README.md
-*.md
-.DS_Store
-coverage
-.vscode
-.idea
+.env*.local
 
+# Development
+.git
+*.md
+
+# Build artifacts
+dist
+build
+
+# Misc
+*.log
