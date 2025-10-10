@@ -119,10 +119,10 @@ export default function HomePage() {
   )
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-0 md:p-8">
-      <div className="max-w-5xl mx-auto h-screen md:h-auto">
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-0 md:p-8">
+      <div className="max-w-5xl mx-auto h-full">
         {/* Documents List */}
-        <div className="bg-white md:rounded-3xl md:shadow-2xl overflow-hidden h-full md:h-auto border border-gray-100">
+        <div className="bg-white md:rounded-3xl md:shadow-2xl overflow-hidden h-full border border-gray-100 flex flex-col">
           {/* Header with All Documents + Plus button */}
           <div className="p-8 bg-gradient-to-r from-blue-600 to-indigo-600">
             <div className="flex items-center justify-between">
@@ -170,7 +170,7 @@ export default function HomePage() {
           )}
           
           {/* Documents List - Scrollable */}
-          <div className="p-6 max-h-[calc(100vh-280px)] md:max-h-[calc(100vh-320px)] overflow-y-auto">
+          <div className="p-6 flex-1 overflow-y-auto min-h-0">
             {loading ? (
               <div className="flex items-center justify-center py-16">
                 <div className="relative">
@@ -256,16 +256,6 @@ export default function HomePage() {
                 ))}
               </div>
             )}
-          </div>
-        </div>
-        
-        {/* Server Status */}
-        <div className="mt-4 md:mt-6 mx-4 md:mx-0 p-4 md:p-5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl md:rounded-2xl border border-blue-200 shadow-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse flex-shrink-0"></div>
-            <p className="text-xs md:text-sm text-blue-900">
-              <strong>Server Requirements:</strong> Hocuspocus (port 1234) • Signaling (port 4444) • Supabase
-            </p>
           </div>
         </div>
       </div>
