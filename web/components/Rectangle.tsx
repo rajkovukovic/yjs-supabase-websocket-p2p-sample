@@ -18,9 +18,38 @@ export function Rectangle(props: RectangleProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const [isSpacePressed, setIsSpacePressed] = useState(false)
   
+  // Keyboard handlers for Space key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        setIsSpacePressed(true)
+      }
+    }
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        setIsSpacePressed(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+    }
+  }, [])
+
   // Drag handlers
   const handleMouseDown = (e: React.MouseEvent) => {
+    // If Space is pressed, don't interfere with panning - let the event bubble up
+    if (isSpacePressed) {
+      return
+    }
+
     e.stopPropagation()
 
     // Select rectangle when clicked
@@ -40,6 +69,13 @@ export function Rectangle(props: RectangleProps) {
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging && !isResizing) return
 
+    // If Space is pressed during dragging/resizing, stop the operation
+    if (isSpacePressed) {
+      setIsDragging(false)
+      setIsResizing(false)
+      return
+    }
+
     const svgP = getSVGPoint(e.clientX, e.clientY)
 
     if (isDragging) {
@@ -58,7 +94,7 @@ export function Rectangle(props: RectangleProps) {
         height: newHeight
       })
     }
-  }, [isDragging, isResizing, dragStart, ydoc, props.id, props.x, props.y, getSVGPoint])
+  }, [isDragging, isResizing, isSpacePressed, dragStart, ydoc, props.id, props.x, props.y, getSVGPoint])
   
   const handleMouseUp = () => {
     setIsDragging(false)
@@ -67,6 +103,11 @@ export function Rectangle(props: RectangleProps) {
   
   // Resize handlers (SE corner)
   const handleResizeMouseDown = (e: React.MouseEvent) => {
+    // If Space is pressed, don't interfere with panning - let the event bubble up
+    if (isSpacePressed) {
+      return
+    }
+
     e.stopPropagation()
     setIsResizing(true)
   }
@@ -99,7 +140,7 @@ export function Rectangle(props: RectangleProps) {
         stroke={props.isSelected ? '#2563eb' : (props.stroke || '#000')}
         strokeWidth={props.isSelected ? 3 : (props.strokeWidth || 2)}
         className={(isDragging || isResizing) ? 'no-transition' : ''}
-        style={{ cursor: isDragging ? 'grabbing' : 'move' }}
+        style={{ cursor: isSpacePressed ? 'grab' : isDragging ? 'grabbing' : 'move' }}
         onMouseDown={handleMouseDown}
       />
       
@@ -112,7 +153,7 @@ export function Rectangle(props: RectangleProps) {
           fill="white"
           stroke="#2563eb"
           strokeWidth={strokeWidth}
-          style={{ cursor: 'se-resize' }}
+          style={{ cursor: isSpacePressed ? 'grab' : 'se-resize' }}
           onMouseDown={handleResizeMouseDown}
         />
       )}
