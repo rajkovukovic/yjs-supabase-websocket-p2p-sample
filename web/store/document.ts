@@ -8,7 +8,6 @@ export const documentState = proxy<DocumentState>({
   status: 'disconnected',
   peers: 0,
   selectedRectangleId: null,
-  isCreateRectangleMode: false
 })
 
 // Sync Yjs to Valtio
@@ -57,9 +56,5 @@ export const actions = {
   setSelectedRectangle(id: string | null) {
     documentState.selectedRectangleId = id
   },
-
-  setCreateRectangleMode(enabled: boolean) {
-    documentState.isCreateRectangleMode = enabled
-  }
 }
 

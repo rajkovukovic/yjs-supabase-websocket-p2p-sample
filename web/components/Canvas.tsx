@@ -14,7 +14,13 @@ import { useYDoc } from '../hooks/useYjs'
 import { Rectangle } from './Rectangle'
 
 // Separate component to use transform context
-function CanvasContent() {
+function CanvasContent({
+  isCreateRectangleMode,
+  setIsCreateRectangleMode,
+}: {
+  isCreateRectangleMode: boolean
+  setIsCreateRectangleMode: (value: boolean) => void
+}) {
   const { transformState } = useTransformContext();
   const { zoomIn, zoomOut, resetTransform } = useControls();
   const snap = useSnapshot(documentState)
@@ -27,17 +33,39 @@ function CanvasContent() {
   const [dragStart, setDragStart] = useState<{x: number, y: number} | null>(null)
   const [touchStart, setTouchStart] = useState<{x: number, y: number} | null>(null)
 
+  const getSVGPoint = (clientX: number, clientY: number) => {
+    const svg = svgRef.current
+    if (!svg) return { x: 0, y: 0 }
+
+    const point = svg.createSVGPoint()
+    point.x = clientX
+    point.y = clientY
+
+    const ctm = svg.getScreenCTM()
+    if (ctm) {
+      const invertedCtm = ctm.inverse()
+      return point.matrixTransform(invertedCtm)
+    }
+
+    // Fallback for initial render or environments where CTM is not available
+    const { scale, positionX, positionY } = transformState
+    const rect = svg.getBoundingClientRect()
+    const x = (clientX - rect.left - positionX) / scale
+    const y = (clientY - rect.top - positionY) / scale
+    return { x, y }
+  }
+
   // Reset drawing state when exiting create mode
   useEffect(() => {
-    if (!snap.isCreateRectangleMode) {
+    if (!isCreateRectangleMode) {
       setDrawingRectangle(null)
       setDragStart(null)
       setTouchStart(null)
     }
-  }, [snap.isCreateRectangleMode])
+  }, [isCreateRectangleMode])
 
   // Touch event handlers for mobile support
-  const handleTouchStart = (e: React.TouchEvent<SVGSVGElement>, scale: number, positionX: number, positionY: number) => {
+  const handleTouchStart = (e: React.TouchEvent<SVGSVGElement>) => {
     if (isPanning || isSpacePressed) {
       return
     }
@@ -45,11 +73,9 @@ function CanvasContent() {
     e.preventDefault() // Prevent default touch behaviors
 
     const touch = e.touches[0]
-    const rect = svgRef.current!.getBoundingClientRect()
-    const x = (touch.clientX - rect.left - (positionX || 0)) / (scale || 1)
-    const y = (touch.clientY - rect.top - (positionY || 0)) / (scale || 1)
+    const { x, y } = getSVGPoint(touch.clientX, touch.clientY)
 
-    if (snap.isCreateRectangleMode) {
+    if (isCreateRectangleMode) {
       setTouchStart({ x, y })
       setDrawingRectangle({ x, y, width: 0, height: 0 })
     } else if (e.target === svgRef.current || (e.target as SVGElement).id === 'background') {
@@ -57,17 +83,15 @@ function CanvasContent() {
     }
   }
 
-  const handleTouchMove = (e: React.TouchEvent<SVGSVGElement>, scale: number, positionX: number, positionY: number) => {
-    if (!snap.isCreateRectangleMode || !touchStart || isPanning || isSpacePressed) {
+  const handleTouchMove = (e: React.TouchEvent<SVGSVGElement>) => {
+    if (!isCreateRectangleMode || !touchStart || isPanning || isSpacePressed) {
       return
     }
 
     e.preventDefault()
 
     const touch = e.touches[0]
-    const rect = svgRef.current!.getBoundingClientRect()
-    const currentX = (touch.clientX - rect.left - (positionX || 0)) / (scale || 1)
-    const currentY = (touch.clientY - rect.top - (positionY || 0)) / (scale || 1)
+    const { x: currentX, y: currentY } = getSVGPoint(touch.clientX, touch.clientY)
 
     const width = currentX - touchStart.x
     const height = currentY - touchStart.y
@@ -80,17 +104,15 @@ function CanvasContent() {
     })
   }
 
-  const handleTouchEnd = (e: React.TouchEvent<SVGSVGElement>, scale: number, positionX: number, positionY: number) => {
-    if (!snap.isCreateRectangleMode || !touchStart) {
+  const handleTouchEnd = (e: React.TouchEvent<SVGSVGElement>) => {
+    if (!isCreateRectangleMode || !touchStart) {
       return
     }
 
     e.preventDefault()
 
     const touch = e.changedTouches[0]
-    const rect = svgRef.current!.getBoundingClientRect()
-    const currentX = (touch.clientX - rect.left - (positionX || 0)) / (scale || 1)
-    const currentY = (touch.clientY - rect.top - (positionY || 0)) / (scale || 1)
+    const { x: currentX, y: currentY } = getSVGPoint(touch.clientX, touch.clientY)
 
     const width = currentX - touchStart.x
     const height = currentY - touchStart.y
@@ -126,9 +148,9 @@ function CanvasContent() {
         actions.setSelectedRectangle(null)
       }
 
-      if (e.code === 'Escape' && snap.isCreateRectangleMode) {
+      if (e.code === 'Escape' && isCreateRectangleMode) {
         e.preventDefault()
-        actions.setCreateRectangleMode(false)
+        setIsCreateRectangleMode(false)
         setDrawingRectangle(null)
         setDragStart(null)
       }
@@ -148,20 +170,17 @@ function CanvasContent() {
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
     }
-  }, [isSpacePressed, snap.selectedRectangleId, snap.isCreateRectangleMode, ydoc, dragStart, drawingRectangle])
+  }, [isSpacePressed, snap.selectedRectangleId, isCreateRectangleMode, ydoc, dragStart, drawingRectangle, setIsCreateRectangleMode])
 
   // Handle mouse down for rectangle creation or selection
-  const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>, scale: number, positionX: number, positionY: number) => {
+  const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
     if (isPanning || isSpacePressed) {
       return
     }
 
-    // Calculate position in SVG coordinates accounting for zoom and pan
-    const rect = svgRef.current!.getBoundingClientRect()
-    const x = (e.clientX - rect.left - (positionX || 0)) / (scale || 1)
-    const y = (e.clientY - rect.top - (positionY || 0)) / (scale || 1)
+    const { x, y } = getSVGPoint(e.clientX, e.clientY)
 
-    if (snap.isCreateRectangleMode) {
+    if (isCreateRectangleMode) {
       // Start drawing rectangle
       setDragStart({ x, y })
       setDrawingRectangle({ x, y, width: 0, height: 0 })
@@ -172,15 +191,13 @@ function CanvasContent() {
   }
 
   // Handle mouse move for rectangle drawing
-  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>, scale: number, positionX: number, positionY: number) => {
-    if (!snap.isCreateRectangleMode || !dragStart || isPanning || isSpacePressed) {
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!isCreateRectangleMode || !dragStart || isPanning || isSpacePressed) {
       return
     }
 
     // Calculate current position in SVG coordinates
-    const rect = svgRef.current!.getBoundingClientRect()
-    const currentX = (e.clientX - rect.left - (positionX || 0)) / (scale || 1)
-    const currentY = (e.clientY - rect.top - (positionY || 0)) / (scale || 1)
+    const { x: currentX, y: currentY } = getSVGPoint(e.clientX, e.clientY)
 
     // Update drawing rectangle
     const width = currentX - dragStart.x
@@ -195,15 +212,13 @@ function CanvasContent() {
   }
 
   // Handle mouse up to complete rectangle creation
-  const handleMouseUp = (e: React.MouseEvent<SVGSVGElement>, scale: number, positionX: number, positionY: number) => {
-    if (!snap.isCreateRectangleMode || !dragStart) {
+  const handleMouseUp = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!isCreateRectangleMode || !dragStart) {
       return
     }
 
     // Calculate final position in SVG coordinates
-    const rect = svgRef.current!.getBoundingClientRect()
-    const currentX = (e.clientX - rect.left - (positionX || 0)) / (scale || 1)
-    const currentY = (e.clientY - rect.top - (positionY || 0)) / (scale || 1)
+    const { x: currentX, y: currentY } = getSVGPoint(e.clientX, e.clientY)
 
     const width = currentX - dragStart.x
     const height = currentY - dragStart.y
@@ -260,16 +275,16 @@ function CanvasContent() {
         </button>
         <button
           onClick={() => {
-            actions.setCreateRectangleMode(!snap.isCreateRectangleMode)
+            setIsCreateRectangleMode(!isCreateRectangleMode)
             setDrawingRectangle(null)
             setDragStart(null)
           }}
           className={`p-2 rounded shadow-md transition-colors ${
-            snap.isCreateRectangleMode
+            isCreateRectangleMode
               ? 'bg-blue-500 hover:bg-blue-600 text-white'
               : 'bg-white hover:bg-gray-100'
           }`}
-          title={snap.isCreateRectangleMode ? "Exit Create Rectangle Mode (Esc)" : "Create Rectangle Mode"}
+          title={isCreateRectangleMode ? "Exit Create Rectangle Mode (Esc)" : "Create Rectangle Mode"}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zM9 9h6v6H9V9z" />
@@ -285,7 +300,7 @@ function CanvasContent() {
         <div className="font-semibold mb-1">Controls:</div>
         <div>• Scroll/Pinch to zoom</div>
         <div>• Space + Drag to pan</div>
-        {snap.isCreateRectangleMode ? (
+        {isCreateRectangleMode ? (
           <>
             <div>• Drag to draw rectangle</div>
             <div>• Click rectangle button or Esc to exit mode</div>
@@ -314,12 +329,12 @@ function CanvasContent() {
             background: '#f5f5f5',
             touchAction: 'none' // Prevents default touch behaviors
           }}
-          onMouseDown={(e) => handleMouseDown(e, transformState.scale, transformState.positionX, transformState.positionY)}
-          onMouseMove={(e) => handleMouseMove(e, transformState.scale, transformState.positionX, transformState.positionY)}
-          onMouseUp={(e) => handleMouseUp(e, transformState.scale, transformState.positionX, transformState.positionY)}
-          onTouchStart={(e) => handleTouchStart(e, transformState.scale, transformState.positionX, transformState.positionY)}
-          onTouchMove={(e) => handleTouchMove(e, transformState.scale, transformState.positionX, transformState.positionY)}
-          onTouchEnd={(e) => handleTouchEnd(e, transformState.scale, transformState.positionX, transformState.positionY)}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         >
           <defs>
             <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
@@ -340,7 +355,7 @@ function CanvasContent() {
           ))}
 
           {/* Preview rectangle while drawing */}
-          {drawingRectangle && snap.isCreateRectangleMode && (
+          {drawingRectangle && isCreateRectangleMode && (
             <rect
               x={drawingRectangle.x}
               y={drawingRectangle.y}
@@ -367,6 +382,7 @@ export function Canvas() {
   const ydoc = useYDoc()
 
   const [isPanning, setIsPanning] = useState(false)
+  const [isCreateRectangleMode, setIsCreateRectangleMode] = useState(false)
   const transformRef = useRef<ReactZoomPanPinchRef>(null)
 
 
@@ -385,7 +401,7 @@ export function Canvas() {
         step: 5
       }}
       panning={{
-        disabled: false,
+        disabled: isCreateRectangleMode,
         velocityDisabled: false
       }}
       doubleClick={{
@@ -394,7 +410,7 @@ export function Canvas() {
       onPanningStart={() => setIsPanning(true)}
       onPanningStop={() => setTimeout(() => setIsPanning(false), 50)}
     >
-      <CanvasContent />
+      <CanvasContent isCreateRectangleMode={isCreateRectangleMode} setIsCreateRectangleMode={setIsCreateRectangleMode} />
     </TransformWrapper>
   )
 }
