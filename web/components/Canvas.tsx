@@ -1,5 +1,6 @@
 'use client'
 
+import React, { createContext, useContext } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { useSnapshot } from 'valtio'
 import {
@@ -12,6 +13,21 @@ import {
 import { documentState, actions } from '../store/document'
 import { useYDoc } from '../hooks/useYjs'
 import { Rectangle } from './Rectangle'
+
+// Context for coordinate transformation
+interface CoordinateContextType {
+  getSVGPoint: (clientX: number, clientY: number) => { x: number; y: number }
+}
+
+const CoordinateContext = createContext<CoordinateContextType | null>(null)
+
+export const useCoordinateContext = () => {
+  const context = useContext(CoordinateContext)
+  if (!context) {
+    throw new Error('useCoordinateContext must be used within CoordinateContext.Provider')
+  }
+  return context
+}
 
 // Separate component to use transform context
 function CanvasContent({
@@ -243,7 +259,7 @@ function CanvasContent({
   }
 
   return (
-    <>
+    <CoordinateContext.Provider value={{ getSVGPoint }}>
       {/* Zoom Controls */}
       <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
         <button
@@ -318,7 +334,7 @@ function CanvasContent({
         wrapperStyle={{
           width: '100%',
           height: '100%',
-          cursor: isPanning ? 'grabbing' : isSpacePressed ? 'grab' : 'default'
+          cursor: isCreateRectangleMode ? 'crosshair' : isPanning ? 'grabbing' : isSpacePressed ? 'grab' : 'default'
         }}
       >
         <svg
@@ -373,7 +389,7 @@ function CanvasContent({
           )}
         </svg>
       </TransformComponent>
-    </>
+    </CoordinateContext.Provider>
   )
 }
 

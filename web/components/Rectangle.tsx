@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { actions } from '../store/document'
 import { useYDoc } from '../hooks/useYjs'
+import { useCoordinateContext } from './Canvas'
 import { Rectangle as RectangleType } from '../types'
 
 interface RectangleProps extends RectangleType {
@@ -13,6 +14,7 @@ interface RectangleProps extends RectangleType {
 
 export function Rectangle(props: RectangleProps) {
   const ydoc = useYDoc()
+  const { getSVGPoint } = useCoordinateContext()
   const [isDragging, setIsDragging] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
@@ -20,72 +22,43 @@ export function Rectangle(props: RectangleProps) {
   // Drag handlers
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation()
-    
+
     // Select rectangle when clicked
     if (props.onSelect) {
       props.onSelect()
     }
-    
+
     setIsDragging(true)
-    
-    // Convert screen coordinates to SVG coordinates
-    const svg = document.querySelector('svg')
-    if (!svg) return
-    
-    const pt = svg.createSVGPoint()
-    pt.x = e.clientX
-    pt.y = e.clientY
-    const matrix = svg.getScreenCTM()
-    if (!matrix) return
-    
-    const svgP = pt.matrixTransform(matrix.inverse())
-    
+
+    // Get SVG coordinates using the context function
+    const svgP = getSVGPoint(e.clientX, e.clientY)
+
     // Calculate offset in SVG coordinate space
     setDragStart({ x: svgP.x - props.x, y: svgP.y - props.y })
   }
   
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging && !isResizing) return
-    
+
+    const svgP = getSVGPoint(e.clientX, e.clientY)
+
     if (isDragging) {
-      const svg = document.querySelector('svg')
-      if (!svg) return
-      
-      const pt = svg.createSVGPoint()
-      pt.x = e.clientX
-      pt.y = e.clientY
-      const matrix = svg.getScreenCTM()
-      if (!matrix) return
-      
-      const svgP = pt.matrixTransform(matrix.inverse())
-      
       actions.updateRectangle(ydoc, props.id, {
         x: svgP.x - dragStart.x,
         y: svgP.y - dragStart.y
       })
     }
-    
+
     if (isResizing) {
-      const svg = document.querySelector('svg')
-      if (!svg) return
-      
-      const pt = svg.createSVGPoint()
-      pt.x = e.clientX
-      pt.y = e.clientY
-      const matrix = svg.getScreenCTM()
-      if (!matrix) return
-      
-      const svgP = pt.matrixTransform(matrix.inverse())
-      
       const newWidth = Math.max(20, svgP.x - props.x)
       const newHeight = Math.max(20, svgP.y - props.y)
-      
+
       actions.updateRectangle(ydoc, props.id, {
         width: newWidth,
         height: newHeight
       })
     }
-  }, [isDragging, isResizing, dragStart, ydoc, props.id, props.x, props.y])
+  }, [isDragging, isResizing, dragStart, ydoc, props.id, props.x, props.y, getSVGPoint])
   
   const handleMouseUp = () => {
     setIsDragging(false)
