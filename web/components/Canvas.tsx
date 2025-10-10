@@ -191,15 +191,19 @@ function CanvasContent({
         actions.setSelectedRectangle(null)
       }
 
-      if (e.code === 'Escape' && isCreateRectangleMode) {
+      if (e.code === 'Escape') {
         e.preventDefault()
-        setIsCreateRectangleMode(false)
-        setDrawingRectangle(null)
-        setDragStart(null)
-        setSelectionBox(null)
-        setSelectionStart(null)
-        setPanStart(null)
-        setIsPanning(false)
+        if (showInfoPopup) {
+          setShowInfoPopup(false)
+        } else if (isCreateRectangleMode) {
+          setIsCreateRectangleMode(false)
+          setDrawingRectangle(null)
+          setDragStart(null)
+          setSelectionBox(null)
+          setSelectionStart(null)
+          setPanStart(null)
+          setIsPanning(false)
+        }
       }
     }
 
@@ -217,7 +221,7 @@ function CanvasContent({
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
     }
-  }, [isSpacePressed, snap.selectedRectangleIds, isCreateRectangleMode, ydoc, dragStart, drawingRectangle, setIsCreateRectangleMode])
+  }, [isSpacePressed, snap.selectedRectangleIds, isCreateRectangleMode, ydoc, dragStart, drawingRectangle, setIsCreateRectangleMode, showInfoPopup, setShowInfoPopup])
 
   // Handle mouse down for rectangle creation, selection, or panning
   const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
