@@ -21,7 +21,7 @@ export interface DocumentState {
   synced: boolean
   status: 'disconnected' | 'connecting' | 'connected'
   peers: number
-  selectedRectangleId: string | null
+  selectedRectangleIds: string[]
 }
 
 export interface CursorState {

@@ -7,7 +7,7 @@ export const documentState = proxy<DocumentState>({
   synced: false,
   status: 'disconnected',
   peers: 0,
-  selectedRectangleId: null,
+  selectedRectangleIds: [],
 })
 
 // Sync Yjs to Valtio
@@ -53,8 +53,14 @@ export const actions = {
     }
   },
   
-  setSelectedRectangle(id: string | null) {
-    documentState.selectedRectangleId = id
+  setSelectedRectangle(ids: string[] | string | null) {
+    if (ids === null) {
+      documentState.selectedRectangleIds = []
+    } else if (typeof ids === 'string') {
+      documentState.selectedRectangleIds = [ids]
+    } else {
+      documentState.selectedRectangleIds = ids
+    }
   },
 }
 

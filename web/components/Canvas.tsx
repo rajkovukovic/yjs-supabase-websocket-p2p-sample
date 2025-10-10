@@ -149,8 +149,9 @@ function CanvasContent({
     const height = currentY - touchStart.y
 
     if (Math.abs(width) > 5 && Math.abs(height) > 5) {
+      const rectId = crypto.randomUUID()
       actions.addRectangle(ydoc, {
-        id: crypto.randomUUID(),
+        id: rectId,
         x: width < 0 ? currentX : touchStart.x,
         y: height < 0 ? currentY : touchStart.y,
         width: Math.abs(width),
@@ -159,6 +160,7 @@ function CanvasContent({
         stroke: '#000',
         strokeWidth: 2
       })
+      actions.setSelectedRectangle(rectId)
     }
 
     setDrawingRectangle(null)
@@ -173,9 +175,11 @@ function CanvasContent({
         setIsSpacePressed(true)
       }
 
-      if ((e.code === 'Backspace' || e.code === 'Delete') && snap.selectedRectangleId) {
+      if ((e.code === 'Backspace' || e.code === 'Delete') && snap.selectedRectangleIds.length > 0) {
         e.preventDefault()
-        actions.deleteRectangle(ydoc, snap.selectedRectangleId)
+        snap.selectedRectangleIds.forEach(id => {
+          actions.deleteRectangle(ydoc, id)
+        })
         actions.setSelectedRectangle(null)
       }
 
@@ -205,7 +209,7 @@ function CanvasContent({
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
     }
-  }, [isSpacePressed, snap.selectedRectangleId, isCreateRectangleMode, ydoc, dragStart, drawingRectangle, setIsCreateRectangleMode])
+  }, [isSpacePressed, snap.selectedRectangleIds, isCreateRectangleMode, ydoc, dragStart, drawingRectangle, setIsCreateRectangleMode])
 
   // Handle mouse down for rectangle creation, selection, or panning
   const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
@@ -271,12 +275,23 @@ function CanvasContent({
         const width = currentX - selectionStart.x
         const height = currentY - selectionStart.y
 
-        setSelectionBox({
+        const newSelectionBox = {
           x: width < 0 ? currentX : selectionStart.x,
           y: height < 0 ? currentY : selectionStart.y,
           width: Math.abs(width),
           height: Math.abs(height)
-        })
+        }
+
+        setSelectionBox(newSelectionBox)
+
+        // Select rectangles that intersect with the selection box in real-time
+        if (newSelectionBox.width > 5 && newSelectionBox.height > 5) {
+          const intersectingRects = snap.rectangles.filter(rect => rectanglesIntersect(newSelectionBox, rect))
+          const intersectingIds = intersectingRects.map(rect => rect.id)
+          actions.setSelectedRectangle(intersectingIds)
+        } else {
+          actions.setSelectedRectangle(null)
+        }
       }
     }
   }
@@ -296,8 +311,9 @@ function CanvasContent({
 
       // Only create rectangle if it has meaningful size (more than 5px in each dimension)
       if (Math.abs(width) > 5 && Math.abs(height) > 5) {
+        const rectId = crypto.randomUUID()
         actions.addRectangle(ydoc, {
-          id: crypto.randomUUID(),
+          id: rectId,
           x: width < 0 ? currentX : dragStart.x,
           y: height < 0 ? currentY : dragStart.y,
           width: Math.abs(width),
@@ -306,31 +322,21 @@ function CanvasContent({
           stroke: '#000',
           strokeWidth: 2
         })
+        actions.setSelectedRectangle(rectId)
       }
 
       // Reset drawing state
       setDrawingRectangle(null)
       setDragStart(null)
     } else if (!isCreateRectangleMode && selectionStart && selectionBox) {
-      // Complete selection
+      // Handle small clicks (less than minimum selection size)
       const minSize = 5 // Minimum size to be considered a selection rather than a click
 
-      if (selectionBox.width > minSize && selectionBox.height > minSize) {
-        // Find rectangles that intersect with selection box
-        const selectedIds = snap.rectangles
-          .filter(rect => rectanglesIntersect(selectionBox, rect))
-          .map(rect => rect.id)
-
-        // For now, select the first one found (could be extended to multi-select)
-        if (selectedIds.length > 0) {
-          actions.setSelectedRectangle(selectedIds[0])
-        } else {
-          actions.setSelectedRectangle(null)
-        }
-      } else {
+      if (selectionBox.width <= minSize && selectionBox.height <= minSize) {
         // It was just a click, deselect everything
         actions.setSelectedRectangle(null)
       }
+      // For larger selections, the selection is already handled in real-time during mouse move
 
       // Reset selection state
       setSelectionBox(null)
@@ -449,7 +455,7 @@ function CanvasContent({
             <Rectangle
               key={rect.id}
               {...rect}
-              isSelected={snap.selectedRectangleId === rect.id}
+              isSelected={snap.selectedRectangleIds.includes(rect.id)}
               onSelect={() => actions.setSelectedRectangle(rect.id)}
               scale={transformState.scale}
             />
