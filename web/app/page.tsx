@@ -141,7 +141,7 @@ function HomePageContent() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-3xl font-bold text-white">
-                  All Documents
+                  Documents
                 </h2>
                 <p className="text-blue-100 mt-1 text-sm">
                   {documents.length} {documents.length === 1 ? 'document' : 'documents'} total
