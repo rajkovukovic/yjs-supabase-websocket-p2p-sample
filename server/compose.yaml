@@ -22,6 +22,8 @@ services:
     ports:
       - "4444:4444"
     environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
       - NODE_ENV=production
       - SIGNALING_PORT=4444
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
