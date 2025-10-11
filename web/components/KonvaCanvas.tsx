@@ -161,6 +161,7 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
     }
     e.evt.preventDefault()
     setSelecting(true)
+    actions.setSelectedRectangle([])
     const stage = e.target.getStage()
     if (!stage) return
     const pos = stage.getRelativePointerPosition()
@@ -200,6 +201,19 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
       selectionRectRef.current.x(selectionBox.current.x1)
       selectionRectRef.current.y(selectionBox.current.y1)
     }
+
+    const box = selectionRectRef.current?.getClientRect()
+    if (!box) return
+
+    const selected = snap.rectangles.filter((rect) =>
+      Konva.Util.haveIntersection(box, {
+        x: rect.x,
+        y: rect.y,
+        width: rect.width,
+        height: rect.height,
+      }),
+    )
+    actions.setSelectedRectangle(selected.map((rect) => rect.id))
   }
 
   const handleMouseUp = (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -231,22 +245,6 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
     if (selectionRectRef.current) {
       selectionRectRef.current.visible(false)
     }
-
-    const stage = e.target.getStage()
-    if (!stage) return
-
-    const box = selectionRectRef.current?.getClientRect()
-    if (!box) return
-
-    const selected = snap.rectangles.filter((rect) =>
-      Konva.Util.haveIntersection(box, {
-        x: rect.x,
-        y: rect.y,
-        width: rect.width,
-        height: rect.height,
-      }),
-    )
-    actions.setSelectedRectangle(selected.map((rect) => rect.id))
   }
 
   const zoom = (direction: 'in' | 'out') => {
