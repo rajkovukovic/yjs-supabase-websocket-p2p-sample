@@ -1,5 +1,5 @@
 -- ================================================
--- Yjs Collaborative Editor - Supabase Schema
+-- Yjs Rectangles Editor - Supabase Schema
 -- ================================================
 -- This schema provides persistent storage for Yjs documents
 -- with support for incremental updates and snapshots.

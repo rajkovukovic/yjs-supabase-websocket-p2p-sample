@@ -1,6 +1,6 @@
 # Dockploy Deployment Guide
 
-Complete guide to deploy your Yjs Collaborative Editor to Dockploy.
+Complete guide to deploy your Yjs Rectangles Editor to Dockploy.
 
 ## 📋 Prerequisites
 
@@ -389,7 +389,7 @@ When you push new code to GitHub:
 
 ## 🎉 Success!
 
-Your collaborative editor is now live! Share the web app URL with users and start collaborating in real-time.
+Your Rectangles Editor is now live! Share the web app URL with users and start collaborating in real-time.
 
 **Example URLs**:
 - Web App: `https://yjs-web.dockploy.app/document/my-first-doc`

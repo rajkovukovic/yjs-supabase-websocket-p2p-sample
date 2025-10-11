@@ -2,7 +2,7 @@
 
 ## Overview
 
-Successfully implemented Google OAuth authentication for the collaborative editor application. All pages now require authentication, and users see a beautiful login page instead of being redirected when not authenticated.
+Successfully implemented Google OAuth authentication for the Rectangles Editor application. All pages now require authentication, and users see a beautiful login page instead of being redirected when not authenticated.
 
 ## What Was Implemented
 

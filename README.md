@@ -1,4 +1,4 @@
-# Yjs Collaborative Editor - Real-time Graphic Editing
+# Yjs Rectangles Editor - Real-time Graphic Editing
 
 A production-ready collaborative graphic editor built with Yjs, React, and Supabase. Features real-time synchronization, offline support, and peer-to-peer connectivity.
 

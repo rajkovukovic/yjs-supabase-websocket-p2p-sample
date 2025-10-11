@@ -1,6 +1,6 @@
 # ✅ Frontend Implementation Complete!
 
-The collaborative editor frontend has been **fully implemented** in the `./web` directory according to the specifications in `plan.md`.
+The Rectangles Editor frontend has been **fully implemented** in the `./web` directory according to the specifications in `plan.md`.
 
 ## 🎉 What's Been Built
 

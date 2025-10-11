@@ -1,4 +1,4 @@
-# Collaborative Editor - Frontend
+# Rectangles Editor - Frontend
 
 A real-time collaborative graphic editing tool built with Next.js, Yjs, and Valtio.
 

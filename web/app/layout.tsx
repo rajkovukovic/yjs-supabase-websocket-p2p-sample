@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Collaborative Editor',
+  title: 'Rectangles Editor',
   description: 'Real-time collaborative graphic editing tool built with Yjs',
 }
 

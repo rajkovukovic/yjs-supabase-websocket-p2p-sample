@@ -1,4 +1,4 @@
-# Getting Started with Collaborative Editor
+# Getting Started with Rectangles Editor
 
 Welcome! This guide will get you up and running in **5 minutes**.
 

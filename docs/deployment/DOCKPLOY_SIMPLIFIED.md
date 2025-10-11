@@ -2,7 +2,7 @@
 
 ## TL;DR - Deploy in 20 Minutes
 
-Deploy your collaborative editor with just **2 services** using Docker Compose!
+Deploy your Rectangles Editor with just **2 services** using Docker Compose!
 
 ---
 

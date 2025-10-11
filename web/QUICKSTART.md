@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Get your collaborative editor running in 5 minutes!
+Get your Rectangles Editor running in 5 minutes!
 
 ## Step 1: Install Dependencies
 

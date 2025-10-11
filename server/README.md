@@ -1,4 +1,4 @@
-# Collaborative Editor Server
+# Rectangles Editor Server
 
 Backend services for real-time collaborative graphic editing using Yjs CRDT.
 

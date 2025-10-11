@@ -1,6 +1,6 @@
 # Server Setup Guide
 
-Complete setup guide for the collaborative editor backend.
+Complete setup guide for the Rectangles Editor backend.
 
 ## 📋 Prerequisites
 

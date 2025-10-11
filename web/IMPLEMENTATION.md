@@ -2,7 +2,7 @@
 
 ## ✅ Completed Implementation
 
-The collaborative editor frontend has been fully implemented according to `plan.md`. All features are working and ready for testing.
+The Rectangles Editor frontend has been fully implemented according to `plan.md`. All features are working and ready for testing.
 
 ## 📁 File Structure
 
