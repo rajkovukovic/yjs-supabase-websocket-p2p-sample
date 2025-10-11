@@ -239,10 +239,10 @@ export function DocumentStatusToolbar({
                 return (
                   <div key={user.clientId} className="group relative">
                     <div
-                      className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white shadow-md ring-2 ${
+                      className={`relative flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-md ${
                         hasP2PConnection
-                          ? 'ring-[3px] ring-emerald-400'
-                          : 'ring-white'
+                          ? "before:animate-spin-slow before:content-[''] before:absolute before:inset-[-2px] before:rounded-full before:border before:border-dashed before:border-emerald-400"
+                          : 'ring-2 ring-white'
                       }`}
                       style={{ backgroundColor: user.color }}
                       title={`${user.name}${
@@ -269,7 +269,7 @@ export function DocumentStatusToolbar({
               })}
               {documentPresenceUsers.length > 5 && (
                 <div
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-400 text-xs font-bold text-white shadow-md ring-2 ring-white"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-400 text-[10px] font-bold text-white shadow-md ring-2 ring-white"
                   title={`+${documentPresenceUsers.length - 5} more`}
                 >
                   +{documentPresenceUsers.length - 5}
@@ -287,7 +287,7 @@ export function DocumentStatusToolbar({
               {otherOnlineUsers.slice(0, 5).map((otherUser) => (
                 <div key={otherUser.email} className="group relative">
                   <div
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md ring-2 ring-white"
+                    className="flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-md ring-2 ring-white"
                     style={{ backgroundColor: otherUser.color }}
                     title={otherUser.name}
                   >
@@ -304,7 +304,7 @@ export function DocumentStatusToolbar({
               ))}
               {otherOnlineUsers.length > 5 && (
                 <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center bg-gray-400 text-white font-bold text-xs shadow-md ring-2 ring-white"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-400 text-[10px] font-bold text-white shadow-md ring-2 ring-white"
                   title={`+${otherOnlineUsers.length - 5} more`}
                 >
                   +{otherOnlineUsers.length - 5}
