@@ -51,22 +51,64 @@ export function DocumentStatusToolbar({ documentName }: DocumentStatusToolbarPro
 
   // Track WebRTC P2P connections
   useEffect(() => {
-    if (!ydoc) return
+    if (!ydoc || !awareness) return
 
     // Get WebRTC provider if available
     const webrtcProvider = (ydoc as any)._webrtcProvider
-    if (!webrtcProvider) return
+    if (!webrtcProvider) {
+      console.log('⚠️ WebRTC provider not available')
+      return
+    }
 
-    const updateWebrtcPeers = ({ webrtcPeers }: any) => {
-      // WebRTC peers is an array of peer IDs
-      const peerIds = new Set<number>(webrtcPeers || [])
-      setWebrtcPeerIds(peerIds)
+    console.log('✅ WebRTC provider found, setting up peer tracking')
+
+    const updateWebrtcPeers = ({ webrtcConns, webrtcPeers }: any) => {
+      console.log('🔍 WebRTC peers event:', { 
+        webrtcConns: webrtcConns ? Object.keys(webrtcConns) : [],
+        webrtcPeers: webrtcPeers || [],
+        awarenessClientID: awareness.clientID
+      })
+      
+      // webrtcConns is an object where keys are peer IDs (strings)
+      // We need to map them to awareness client IDs (numbers)
+      const connectedPeerIds = new Set<number>()
+      
+      if (webrtcConns) {
+        // Get all connected peer IDs from WebRTC
+        const webrtcPeerIdStrings = Object.keys(webrtcConns)
+        console.log('🔗 Active WebRTC connections:', webrtcPeerIdStrings)
+        
+        // Map awareness states to find matching client IDs
+        const states = awareness.getStates()
+        console.log('👥 Awareness states:', Array.from(states.keys()))
+        
+        states.forEach((state: any, clientId: number) => {
+          // y-webrtc uses awareness.clientID as the peer ID
+          // Check if this client has an active WebRTC connection
+          if (webrtcPeerIdStrings.includes(String(clientId))) {
+            console.log(`✅ Found P2P connection for client ${clientId}`)
+            connectedPeerIds.add(clientId)
+          }
+        })
+      }
+      
+      console.log('📊 Connected peer IDs:', Array.from(connectedPeerIds))
+      setWebrtcPeerIds(connectedPeerIds)
     }
 
     webrtcProvider.on('peers', updateWebrtcPeers)
+    
+    // Initial update
+    const initialConns = webrtcProvider.room?.webrtcConns || {}
+    const initialPeers = webrtcProvider.room?.webrtcPeers || []
+    console.log('🚀 Initial WebRTC state:', { 
+      webrtcConns: Object.keys(initialConns),
+      webrtcPeers: initialPeers 
+    })
+    updateWebrtcPeers({ webrtcConns: initialConns, webrtcPeers: initialPeers })
 
     return () => webrtcProvider.off('peers', updateWebrtcPeers)
-  }, [ydoc])
+  }, [ydoc, awareness])
 
   // Filter users who are in this document (excluding self)
   const currentDocumentUsers = presenceUsers.filter(

@@ -1,9 +1,10 @@
 import * as Y from 'yjs'
 import { HocuspocusProvider } from '@hocuspocus/provider'
 import { IndexeddbPersistence } from 'y-indexeddb'
+import { WebrtcProvider } from 'y-webrtc'
 import { io, Socket } from 'socket.io-client'
 import { documentState } from '@/store/document'
-import { HOCUSPOCUS_URL, SIGNALING_URL } from './Env'
+import { HOCUSPOCUS_URL, SIGNALING_URL, WEBRTC_PASSWORD } from './Env'
 
 export function setupProviders(documentName: string, ydoc: Y.Doc) {
   // 1. IndexedDB (local persistence)
@@ -47,13 +48,15 @@ export function setupProviders(documentName: string, ydoc: Y.Doc) {
     }
   })
   
-  // 3. Socket.IO Signaling (peer-to-peer discovery)
-  // Uses Socket.IO for peer discovery and presence
+  // 3. WebRTC Provider (peer-to-peer document sync)
+  // Uses Socket.IO signaling server for peer discovery
+  let webrtcProvider: WebrtcProvider | null = null
   let signalingSocket: Socket | null = null
   
   if (SIGNALING_URL) {
     console.log('🔗 Connecting to Socket.IO signaling server:', SIGNALING_URL)
     
+    // Create Socket.IO signaling connection
     signalingSocket = io(SIGNALING_URL, {
       transports: ['websocket', 'polling'],
       reconnection: true,
@@ -105,18 +108,69 @@ export function setupProviders(documentName: string, ydoc: Y.Doc) {
         console.log('👥 Total peers in room:', documentState.peers)
       })
     })
+    
+    // Create WebRTC provider for P2P document synchronization
+    console.log('🚀 Initializing WebRTC provider for P2P sync')
+    webrtcProvider = new WebrtcProvider(documentName, ydoc, {
+      // Use awareness-based peer discovery through Hocuspocus
+      // Empty signaling array means use awareness protocol only
+      signaling: [],
+      // Optional password for room security
+      password: WEBRTC_PASSWORD || null,
+      // WebRTC configuration with STUN servers
+      peerOpts: {
+        config: {
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+          ]
+        }
+      },
+      // Share awareness with Hocuspocus for peer discovery
+      awareness: hocuspocusProvider.awareness,
+      // Max number of WebRTC connections
+      maxConns: 20,
+      // Filter broadcast connections (optimize network)
+      filterBcConns: true,
+    })
+    
+    // Track WebRTC peer connections
+    webrtcProvider.on('peers', ({ webrtcPeers, webrtcConns, bcConns }: any) => {
+      const p2pCount = Object.keys(webrtcConns || {}).length
+      console.log(`🔗 WebRTC P2P peers event:`, {
+        connections: p2pCount,
+        peers: webrtcPeers?.length || 0,
+        webrtcConnKeys: Object.keys(webrtcConns || {}),
+        webrtcPeers: webrtcPeers || [],
+      })
+    })
+    
+    webrtcProvider.on('synced', ({ synced }: any) => {
+      if (synced) {
+        console.log('✅ WebRTC P2P synchronized')
+      }
+    })
+    
+    // Additional debugging events
+    webrtcProvider.on('status', ({ status }: any) => {
+      console.log('📡 WebRTC status:', status)
+    })
   } else {
-    console.warn('⚠️ NEXT_PUBLIC_SIGNALING_URL not set, peer discovery disabled')
+    console.warn('⚠️ NEXT_PUBLIC_SIGNALING_URL not set, P2P WebRTC disabled')
   }
   
   return {
     indexeddbProvider,
     hocuspocusProvider,
+    webrtcProvider,
     signalingSocket,
     
     destroy: () => {
       indexeddbProvider.destroy()
       hocuspocusProvider.destroy()
+      if (webrtcProvider) {
+        webrtcProvider.destroy()
+      }
       if (signalingSocket) {
         signalingSocket.emit('leave', documentName)
         signalingSocket.disconnect()

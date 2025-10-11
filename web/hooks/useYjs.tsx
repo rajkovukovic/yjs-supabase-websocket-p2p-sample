@@ -20,8 +20,9 @@ export function YjsProvider({
   useEffect(() => {
     const providers = setupProviders(documentName, ydoc)
     
-    // Store the hocuspocus provider on the ydoc for access by other hooks
+    // Store providers on the ydoc for access by other hooks
     ;(ydoc as any)._hocuspocusProvider = providers.hocuspocusProvider
+    ;(ydoc as any)._webrtcProvider = providers.webrtcProvider
     
     // Sync Yjs to Valtio
     const unsyncYjs = syncYjsToValtio(ydoc)
@@ -69,8 +70,9 @@ export function YjsProvider({
     return () => {
       clearTimeout(timeout)
       unsyncYjs()
-      // Clean up the provider reference
+      // Clean up provider references
       delete (ydoc as any)._hocuspocusProvider
+      delete (ydoc as any)._webrtcProvider
       providers.destroy()
     }
   }, [documentName, ydoc])
