@@ -33,8 +33,8 @@ export const config = {
   hocuspocus: {
     port: parseInt(process.env.HOCUSPOCUS_PORT || '1234'),
   },
-  signaling: {
-    port: parseInt(process.env.SIGNALING_PORT || '4444'),
+  yWebrtcSignaling: {
+    port: parseInt(process.env.Y_WEBRTC_SIGNALING_PORT || '4445'),
   },
   cors: {
     origin: process.env.CORS_ORIGIN || '*',

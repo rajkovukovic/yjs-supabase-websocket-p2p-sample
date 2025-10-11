@@ -9,7 +9,7 @@ export const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 // WebSocket servers
 export const HOCUSPOCUS_URL = process.env.NEXT_PUBLIC_HOCUSPOCUS_URL || 'ws://localhost:1234'
-export const SIGNALING_URL = process.env.NEXT_PUBLIC_SIGNALING_URL
+export const Y_WEBRTC_SIGNALING_URL = process.env.NEXT_PUBLIC_Y_WEBRTC_SIGNALING_URL  // Y-WebRTC signaling for P2P
 
 // WebRTC configuration
 export const WEBRTC_PASSWORD = process.env.NEXT_PUBLIC_WEBRTC_PASSWORD
