@@ -175,11 +175,13 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
   }
 
   const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
-    setStage({
-      ...stage,
-      x: e.target.x(),
-      y: e.target.y(),
-    })
+    if (e.target === e.target.getStage()) {
+      setStage({
+        ...stage,
+        x: e.target.x(),
+        y: e.target.y(),
+      })
+    }
   }
 
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
