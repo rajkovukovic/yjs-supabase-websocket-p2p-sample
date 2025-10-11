@@ -5,20 +5,49 @@ import { useRouter } from 'next/navigation'
 import { useSnapshot } from 'valtio'
 import { documentState } from '@/store/document'
 import { useAwareness, useYDoc } from '@/hooks/useYjs'
+import { useAppPresence } from '@/hooks/useAppPresence'
+import { useAuth } from '@/hooks/useAuth'
 import { PresenceUser } from '@/hooks/usePresence'
 import { getShortName } from '@/lib/userUtils'
+import {
+  Wifi,
+  WifiOff,
+  CloudCheck,
+  Loader,
+  ArrowLeft,
+  Users,
+} from 'lucide-react'
 
 interface DocumentStatusToolbarProps {
   documentName: string
 }
 
-export function DocumentStatusToolbar({ documentName }: DocumentStatusToolbarProps) {
+export function DocumentStatusToolbar({
+  documentName,
+}: DocumentStatusToolbarProps) {
   const router = useRouter()
   const snap = useSnapshot(documentState)
   const awareness = useAwareness()
   const ydoc = useYDoc()
   const [presenceUsers, setPresenceUsers] = useState<PresenceUser[]>([])
   const [webrtcPeerIds, setWebrtcPeerIds] = useState<Set<number>>(new Set())
+
+  const { user } = useAuth()
+  const {
+    onlineUsers: appOnlineUsers,
+    localClientId,
+    setCurrentDocumentId,
+  } = useAppPresence()
+
+  // Set current document for app-level presence tracking
+  useEffect(() => {
+    if (documentName) {
+      setCurrentDocumentId(documentName)
+    }
+    return () => {
+      setCurrentDocumentId(null)
+    }
+  }, [documentName, setCurrentDocumentId])
 
   // Track presence users from awareness
   useEffect(() => {
@@ -131,8 +160,15 @@ export function DocumentStatusToolbar({ documentName }: DocumentStatusToolbarPro
   }, [ydoc, awareness])
 
   // Filter users who are in this document (excluding self)
-  const currentDocumentUsers = presenceUsers.filter(
-    (user) => awareness && user.clientId !== awareness.clientID
+  const documentPresenceUsers = presenceUsers.filter(
+    (user) => awareness && user.clientId !== awareness.clientID,
+  )
+
+  // Get emails of users in the current document to filter them out from the app-level list
+  const emailsInThisDocument = new Set(presenceUsers.map((u) => u.email))
+
+  const otherOnlineUsers = appOnlineUsers.filter(
+    (u) => u.email !== user?.email && !emailsInThisDocument.has(u.email),
   )
 
   return (
@@ -143,102 +179,141 @@ export function DocumentStatusToolbar({ documentName }: DocumentStatusToolbarPro
         className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
         title="Back to Home"
       >
-        <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
+        <ArrowLeft className="w-4 h-4 text-gray-700" />
       </button>
 
       {/* Divider */}
       <div className="w-px h-5 bg-gray-300" />
 
       {/* Sync Status */}
-      <div 
-        className={`flex items-center gap-1.5 ${snap.synced ? 'text-emerald-600' : 'text-amber-600'}`} 
+      <div
+        className={`flex items-center gap-1.5 ${
+          snap.synced ? 'text-emerald-600' : 'text-amber-600'
+        }`}
         title={snap.synced ? 'Synced' : 'Syncing...'}
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          {snap.synced ? (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          ) : (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
-              <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="2s" repeatCount="indefinite" />
-            </path>
-          )}
-        </svg>
+        {snap.synced ? (
+          <CloudCheck className="w-4 h-4" />
+        ) : (
+          <Loader className="w-4 h-4 animate-spin" />
+        )}
       </div>
 
       {/* Divider */}
       <div className="w-px h-5 bg-gray-300" />
 
       {/* Connection Status */}
-      <div 
-        className={`flex items-center gap-1.5 ${snap.status === 'connected' ? 'text-emerald-600' : 'text-gray-400'}`} 
+      <div
+        className={`flex items-center gap-1.5 ${
+          snap.status === 'connected' ? 'text-emerald-600' : 'text-gray-400'
+        }`}
         title={`Status: ${snap.status}`}
       >
-        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-        </svg>
+        {snap.status === 'connected' ? (
+          <Wifi className="w-4 h-4" />
+        ) : (
+          <WifiOff className="w-4 h-4" />
+        )}
       </div>
 
       {/* Divider */}
       <div className="w-px h-5 bg-gray-300" />
 
       {/* Presence Users */}
-      {currentDocumentUsers.length > 0 && (
-        <div className="flex -space-x-2">
-          {currentDocumentUsers.slice(0, 5).map((user) => {
-            const hasP2PConnection = webrtcPeerIds.has(user.clientId)
-            const shortName = getShortName(user.name)
-            
-            return (
-              <div
-                key={user.clientId}
-                className="group relative"
-              >
+      <div className="flex items-center gap-3">
+        {/* Group 1: Document name and users in this document */}
+        <div className="flex items-center gap-2">
+          <span
+            className="truncate max-w-[150px] text-sm font-semibold text-gray-800"
+            title={documentName}
+          >
+            {documentName}
+          </span>
+
+          {documentPresenceUsers.length > 0 && (
+            <div className="flex -space-x-2">
+              {documentPresenceUsers.slice(0, 5).map((user) => {
+                const hasP2PConnection = webrtcPeerIds.has(user.clientId)
+                const shortName = getShortName(user.name)
+
+                return (
+                  <div key={user.clientId} className="group relative">
+                    <div
+                      className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white shadow-md ring-2 ${
+                        hasP2PConnection
+                          ? 'ring-[3px] ring-emerald-400'
+                          : 'ring-white'
+                      }`}
+                      style={{ backgroundColor: user.color }}
+                      title={`${user.name}${
+                        hasP2PConnection ? ' (P2P)' : ''
+                      }`}
+                    >
+                      {shortName}
+                    </div>
+
+                    {/* Tooltip */}
+                    <div className="pointer-events-none absolute top-full left-1/2 z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-1.5 text-xs text-white opacity-0 shadow-xl transition-opacity duration-200 group-hover:opacity-100">
+                      <div className="font-semibold">{user.name}</div>
+                      <div className="text-[10px] text-gray-300">
+                        {hasP2PConnection
+                          ? 'Connected via P2P'
+                          : 'Connected via server'}
+                      </div>
+                      <div className="absolute bottom-full left-1/2 mb-[-4px] -translate-x-1/2">
+                        <div className="border-4 border-transparent border-b-gray-900" />
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+              {documentPresenceUsers.length > 5 && (
                 <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md ring-2 ${
-                    hasP2PConnection 
-                      ? 'ring-emerald-400 ring-[3px]' 
-                      : 'ring-white'
-                  }`}
-                  style={{ backgroundColor: user.color }}
-                  title={`${user.name}${hasP2PConnection ? ' (P2P)' : ''}`}
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-400 text-xs font-bold text-white shadow-md ring-2 ring-white"
+                  title={`+${documentPresenceUsers.length - 5} more`}
                 >
-                  {shortName}
+                  +{documentPresenceUsers.length - 5}
                 </div>
-                
-                {/* Tooltip */}
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-xl">
-                  <div className="font-semibold">{user.name}</div>
-                  <div className="text-gray-300 text-[10px]">
-                    {hasP2PConnection ? 'Connected via P2P' : 'Connected via server'}
-                  </div>
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-[-4px]">
-                    <div className="border-4 border-transparent border-b-gray-900" />
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-          {currentDocumentUsers.length > 5 && (
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center bg-gray-400 text-white font-bold text-xs shadow-md ring-2 ring-white"
-              title={`+${currentDocumentUsers.length - 5} more`}
-            >
-              +{currentDocumentUsers.length - 5}
+              )}
             </div>
           )}
         </div>
-      )}
-      
-      {currentDocumentUsers.length === 0 && (
-        <div className="flex items-center gap-1.5 text-gray-500 text-sm" title="No other users online">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
-          <span className="text-xs">Just you</span>
-        </div>
-      )}
+
+        {/* Divider and Group 2: Other online users */}
+        {otherOnlineUsers.length > 0 && (
+          <>
+            <div className="w-px h-5 bg-gray-300" />
+            <div className="flex -space-x-2 opacity-60">
+              {otherOnlineUsers.slice(0, 5).map((otherUser) => (
+                <div key={otherUser.email} className="group relative">
+                  <div
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md ring-2 ring-white"
+                    style={{ backgroundColor: otherUser.color }}
+                    title={otherUser.name}
+                  >
+                    {getShortName(otherUser.name)}
+                  </div>
+                  <div className="pointer-events-none absolute top-full left-1/2 z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-1.5 text-xs text-white opacity-0 shadow-xl transition-opacity duration-200 group-hover:opacity-100">
+                    <div className="font-semibold">{otherUser.name}</div>
+                    <div className="text-[10px] text-gray-300">Online</div>
+                    <div className="absolute bottom-full left-1/2 mb-[-4px] -translate-x-1/2">
+                      <div className="border-4 border-transparent border-b-gray-900" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {otherOnlineUsers.length > 5 && (
+                <div
+                  className="w-7 h-7 rounded-full flex items-center justify-center bg-gray-400 text-white font-bold text-xs shadow-md ring-2 ring-white"
+                  title={`+${otherOnlineUsers.length - 5} more`}
+                >
+                  +{otherOnlineUsers.length - 5}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   )
 }
