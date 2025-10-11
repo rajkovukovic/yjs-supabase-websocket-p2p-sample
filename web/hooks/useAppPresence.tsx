@@ -4,36 +4,15 @@ import { useEffect, useState } from 'react'
 import * as Y from 'yjs'
 import { HocuspocusProvider } from '@hocuspocus/provider'
 import { useAuth } from '@/hooks/useAuth'
+import { generateColorFromString, getShortName } from '@/lib/userUtils'
 
 export interface PresenceUser {
   clientId: number
   name: string
+  shortName: string
   email: string
   avatarUrl?: string
   color: string
-}
-
-const generateColorFromString = (str: string): string => {
-  // Generate a consistent color based on user email
-  let hash = 0
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  
-  const colors = [
-    '#3B82F6', // blue
-    '#8B5CF6', // purple
-    '#EC4899', // pink
-    '#F59E0B', // amber
-    '#10B981', // emerald
-    '#06B6D4', // cyan
-    '#F97316', // orange
-    '#6366F1', // indigo
-    '#14B8A6', // teal
-    '#EF4444', // red
-  ]
-  
-  return colors[Math.abs(hash) % colors.length]
 }
 
 // Singleton Yjs document and provider for app-level presence
@@ -63,6 +42,7 @@ const getGlobalPresenceProvider = () => {
 export const useAppPresence = () => {
   const { user } = useAuth()
   const [onlineUsers, setOnlineUsers] = useState<PresenceUser[]>([])
+  const [localClientId, setLocalClientId] = useState<number | null>(null)
 
   useEffect(() => {
     if (!user) return
@@ -74,10 +54,12 @@ export const useAppPresence = () => {
     }
 
     const awareness = provider.awareness
+    setLocalClientId(awareness.clientID)
 
     // Set local awareness state with user info
+    const userName = user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Anonymous'
     const localState = {
-      name: user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Anonymous',
+      name: userName,
       email: user.email || '',
       avatarUrl: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
       color: generateColorFromString(user.email || 'default'),
@@ -95,6 +77,7 @@ export const useAppPresence = () => {
           users.push({
             clientId,
             name: state.name,
+            shortName: getShortName(state.name),
             email: state.email,
             avatarUrl: state.avatarUrl,
             color: state.color || generateColorFromString(state.email || String(clientId)),
@@ -114,10 +97,12 @@ export const useAppPresence = () => {
     // Cleanup: remove local state when component unmounts
     return () => {
       awareness.off('change', updateOnlineUsers)
-      awareness.setLocalState(null)
+      if (awareness.getLocalState() !== null) {
+        awareness.setLocalState(null)
+      }
     }
   }, [user])
 
-  return { onlineUsers }
+  return { onlineUsers, localClientId }
 }
 
