@@ -13,6 +13,7 @@ export interface PresenceUser {
   email: string
   avatarUrl?: string
   color: string
+  currentDocumentId?: string | null
 }
 
 // Singleton Yjs document and provider for app-level presence
@@ -29,10 +30,9 @@ const getGlobalPresenceProvider = () => {
     providerInitialized = true
     globalProvider = new HocuspocusProvider({
       url: process.env.NEXT_PUBLIC_HOCUSPOCUS_URL || 'ws://localhost:1234',
-      name: '__app_presence__', // Special document name for app-level presence
+      name: '__app_presence_tracker__', // Special document name for app-level presence
       document: globalYDoc,
       token: () => 'mvp-anonymous-access',
-      messageReconnectTimeout: 3600000,
     })
   }
   
@@ -43,6 +43,7 @@ export const useAppPresence = () => {
   const { user } = useAuth()
   const [onlineUsers, setOnlineUsers] = useState<PresenceUser[]>([])
   const [localClientId, setLocalClientId] = useState<number | null>(null)
+  const [awarenessInstance, setAwarenessInstance] = useState<any>(null)
 
   useEffect(() => {
     if (!user) return
@@ -55,6 +56,7 @@ export const useAppPresence = () => {
 
     const awareness = provider.awareness
     setLocalClientId(awareness.clientID)
+    setAwarenessInstance(awareness)
 
     // Set local awareness state with user info
     const userName = user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Anonymous'
@@ -63,29 +65,40 @@ export const useAppPresence = () => {
       email: user.email || '',
       avatarUrl: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
       color: generateColorFromString(user.email || 'default'),
+      currentDocumentId: null,
     }
 
     awareness.setLocalState(localState)
 
+    // Throttle updates to prevent flickering
+    let updateTimeout: NodeJS.Timeout | null = null
+    
     // Update online users list
     const updateOnlineUsers = () => {
-      const states = awareness.getStates()
-      const users: PresenceUser[] = []
+      if (updateTimeout) {
+        clearTimeout(updateTimeout)
+      }
+      
+      updateTimeout = setTimeout(() => {
+        const states = awareness.getStates()
+        const users: PresenceUser[] = []
 
-      states.forEach((state: any, clientId: number) => {
-        if (state && state.name) {
-          users.push({
-            clientId,
-            name: state.name,
-            shortName: getShortName(state.name),
-            email: state.email,
-            avatarUrl: state.avatarUrl,
-            color: state.color || generateColorFromString(state.email || String(clientId)),
-          })
-        }
-      })
+        states.forEach((state: any, clientId: number) => {
+          if (state && state.name) {
+            users.push({
+              clientId,
+              name: state.name,
+              shortName: getShortName(state.name),
+              email: state.email,
+              avatarUrl: state.avatarUrl,
+              color: state.color || generateColorFromString(state.email || String(clientId)),
+              currentDocumentId: state.currentDocumentId || null,
+            })
+          }
+        })
 
-      setOnlineUsers(users)
+        setOnlineUsers(users)
+      }, 150) // Throttle updates to 150ms
     }
 
     // Initial update
@@ -96,6 +109,9 @@ export const useAppPresence = () => {
 
     // Cleanup: remove local state when component unmounts
     return () => {
+      if (updateTimeout) {
+        clearTimeout(updateTimeout)
+      }
       awareness.off('change', updateOnlineUsers)
       if (awareness.getLocalState() !== null) {
         awareness.setLocalState(null)
@@ -103,6 +119,12 @@ export const useAppPresence = () => {
     }
   }, [user])
 
-  return { onlineUsers, localClientId }
+  const setCurrentDocumentId = (documentId: string | null) => {
+    if (awarenessInstance) {
+      awarenessInstance.setLocalStateField('currentDocumentId', documentId)
+    }
+  }
+
+  return { onlineUsers, localClientId, setCurrentDocumentId }
 }
 

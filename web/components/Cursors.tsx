@@ -2,24 +2,38 @@
 
 import { useEffect, useState } from 'react'
 import { useAwareness } from '../hooks/useYjs'
-import { CursorState } from '../types'
+import { useAuth } from '../hooks/useAuth'
+import { generateColorFromString, getShortName } from '../lib/userUtils'
+
+interface CursorState {
+  cursor?: {
+    x: number
+    y: number
+  }
+  name?: string
+  email?: string
+  color?: string
+  shortName?: string
+}
 
 export function Cursors() {
   const awareness = useAwareness()
+  const { user } = useAuth()
   const [cursors, setCursors] = useState<Map<number, CursorState>>(new Map())
   
   useEffect(() => {
-    if (!awareness) return
+    if (!awareness || !user) return
     
-    // Set local user info
-    awareness.setLocalStateField('user', {
-      name: `User ${Math.floor(Math.random() * 1000)}`,
-      color: `hsl(${Math.random() * 360}, 70%, 50%)`
-    })
+    // Set local user info with real user data
+    const userName = user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Anonymous'
+    awareness.setLocalStateField('name', userName)
+    awareness.setLocalStateField('email', user.email || '')
+    awareness.setLocalStateField('color', generateColorFromString(user.email || 'default'))
+    awareness.setLocalStateField('shortName', getShortName(userName))
     
     const updateCursors = () => {
       const states = awareness.getStates()
-      const newCursors = new Map()
+      const newCursors = new Map<number, CursorState>()
       
       states.forEach((state: any, clientId: number) => {
         if (clientId !== awareness.clientID && state.cursor) {
@@ -34,52 +48,57 @@ export function Cursors() {
     updateCursors()
     
     return () => awareness.off('change', updateCursors)
-  }, [awareness])
+  }, [awareness, user])
   
-  // Set local cursor position
-  useEffect(() => {
-    if (!awareness) return
-    
-    const handleMouseMove = (e: MouseEvent) => {
-      awareness.setLocalStateField('cursor', {
-        x: e.clientX,
-        y: e.clientY
-      })
-    }
-    
-    window.addEventListener('mousemove', handleMouseMove)
-    return () => window.removeEventListener('mousemove', handleMouseMove)
-  }, [awareness])
-  
+  return null // Cursors are now rendered inside the Canvas SVG
+}
+
+// Export a component that can be used inside SVG
+export function CanvasCursors({ cursors }: { cursors: Map<number, CursorState> }) {
   return (
-    <div className="absolute inset-0 pointer-events-none">
-      {Array.from(cursors.entries()).map(([clientId, state]) => (
-        <div
-          key={clientId}
-          className="absolute transition-transform duration-100"
-          style={{
-            left: state.cursor.x,
-            top: state.cursor.y,
-            transform: 'translate(-2px, -2px)'
-          }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24">
+    <>
+      {Array.from(cursors.entries()).map(([clientId, state]) => {
+        if (!state.cursor) return null
+        
+        const color = state.color || '#3B82F6'
+        const shortName = state.shortName || state.name?.substring(0, 3).toUpperCase() || 'USR'
+        
+        return (
+          <g key={clientId} style={{ pointerEvents: 'none' }}>
+            {/* Cursor pointer */}
             <path
-              d="M5 3L19 12L12 13L9 19L5 3Z"
-              fill={state.user.color}
+              d={`M ${state.cursor.x} ${state.cursor.y} L ${state.cursor.x + 12} ${state.cursor.y + 16} L ${state.cursor.x + 7.5} ${state.cursor.y + 9.5} L ${state.cursor.x + 2} ${state.cursor.y + 15} Z`}
+              fill={color}
               stroke="white"
-              strokeWidth="1"
+              strokeWidth="1.5"
             />
-          </svg>
-          <div
-            className="mt-1 px-2 py-1 rounded text-xs text-white whitespace-nowrap"
-            style={{ backgroundColor: state.user.color }}
-          >
-            {state.user.name}
-          </div>
-        </div>
-      ))}
-    </div>
+            
+            {/* Label with @shortName */}
+            <g transform={`translate(${state.cursor.x + 15}, ${state.cursor.y + 5})`}>
+              <rect
+                x="0"
+                y="0"
+                width={shortName.length * 7 + 14}
+                height="22"
+                rx="4"
+                fill={color}
+                opacity="0.95"
+              />
+              <text
+                x="7"
+                y="15"
+                fontSize="12"
+                fontWeight="600"
+                fill="white"
+                fontFamily="system-ui, -apple-system, sans-serif"
+              >
+                @{shortName}
+              </text>
+            </g>
+          </g>
+        )
+      })}
+    </>
   )
 }
 

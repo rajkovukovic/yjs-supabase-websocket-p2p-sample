@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { AuthGuard } from '@/components/AuthGuard'
 import { useAuth } from '@/hooks/useAuth'
 import { AppOnlineUsers } from '@/components/AppOnlineUsers'
+import { DocumentPresence } from '@/components/DocumentPresence'
 import { getShortName } from '@/lib/userUtils'
 import { useAppPresence } from '@/hooks/useAppPresence'
 
@@ -20,7 +21,7 @@ interface Document {
 function HomePageContent() {
   const router = useRouter()
   const { user, signOut } = useAuth()
-  const { onlineUsers, localClientId } = useAppPresence()
+  const { onlineUsers, localClientId, setCurrentDocumentId } = useAppPresence()
   const [documentName, setDocumentName] = useState('')
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
@@ -32,6 +33,11 @@ function HomePageContent() {
   const [showUserMenu, setShowUserMenu] = useState(false)
   
   const otherUsers = onlineUsers.filter(u => u.clientId !== localClientId)
+
+  // Set currentDocumentId to null when on home page
+  useEffect(() => {
+    setCurrentDocumentId(null)
+  }, [setCurrentDocumentId])
 
   // Fetch documents on mount
   useEffect(() => {
@@ -276,15 +282,19 @@ function HomePageContent() {
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0 pr-4">
-                          <div className="flex items-center gap-2">
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                              </div>
+                              <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition truncate">
+                                {doc.name}
+                              </h3>
                             </div>
-                            <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition truncate">
-                              {doc.name}
-                            </h3>
+                            {/* Document Presence - Show users viewing this document */}
+                            <DocumentPresence documentName={doc.name} onlineUsers={onlineUsers} />
                           </div>
                           <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-500">
                             <span className="flex items-center gap-1" title="Created">

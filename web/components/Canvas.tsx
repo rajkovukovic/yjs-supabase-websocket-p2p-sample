@@ -12,9 +12,10 @@ import {
   useControls,
 } from 'react-zoom-pan-pinch'
 import { documentState, actions } from '../store/document'
-import { useYDoc } from '../hooks/useYjs'
+import { useYDoc, useAwareness } from '../hooks/useYjs'
 import { Rectangle } from './Rectangle'
 import { ZoomControlsAndStatus } from './ZoomControlsAndStatus'
+import { CanvasCursors } from './Cursors'
 
 // Context for coordinate transformation
 interface CoordinateContextType {
@@ -44,6 +45,7 @@ function CanvasContent({
   const { zoomIn, zoomOut, resetTransform, setTransform } = useControls();
   const snap = useSnapshot(documentState)
   const ydoc = useYDoc()
+  const awareness = useAwareness()
 
   const svgRef = useRef<SVGSVGElement>(null)
   const [isSpacePressed, setIsSpacePressed] = useState(false)
@@ -54,6 +56,7 @@ function CanvasContent({
   const [selectionBox, setSelectionBox] = useState<{x: number, y: number, width: number, height: number} | null>(null)
   const [selectionStart, setSelectionStart] = useState<{x: number, y: number} | null>(null)
   const [panStart, setPanStart] = useState<{x: number, y: number} | null>(null)
+  const [cursors, setCursors] = useState<Map<number, any>>(new Map())
 
   const getSVGPoint = (clientX: number, clientY: number) => {
     const svg = svgRef.current
@@ -89,6 +92,29 @@ function CanvasContent({
              rect1.y + rect1.height < rect2.y ||
              rect2.y + rect2.height < rect1.y)
   }
+
+  // Track cursor positions from awareness
+  useEffect(() => {
+    if (!awareness) return
+
+    const updateCursors = () => {
+      const states = awareness.getStates()
+      const newCursors = new Map<number, any>()
+
+      states.forEach((state: any, clientId: number) => {
+        if (clientId !== awareness.clientID && state.cursor) {
+          newCursors.set(clientId, state)
+        }
+      })
+
+      setCursors(newCursors)
+    }
+
+    awareness.on('change', updateCursors)
+    updateCursors()
+
+    return () => awareness.off('change', updateCursors)
+  }, [awareness])
 
   // Reset drawing state when exiting create mode
   useEffect(() => {
@@ -248,6 +274,12 @@ function CanvasContent({
 
   // Handle mouse move for rectangle drawing, selection, or panning
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    // Always update cursor position in SVG coordinates for awareness
+    const { x: svgX, y: svgY } = getSVGPoint(e.clientX, e.clientY)
+    if (awareness) {
+      awareness.setLocalStateField('cursor', { x: svgX, y: svgY })
+    }
+
     if (isPanning && panStart) {
       // Handle manual panning
       const deltaX = e.clientX - panStart.x
@@ -466,6 +498,9 @@ function CanvasContent({
               }}
             />
           )}
+
+          {/* Render cursors inside SVG */}
+          <CanvasCursors cursors={cursors} />
         </svg>
       </TransformComponent>
     </CoordinateContext.Provider>
