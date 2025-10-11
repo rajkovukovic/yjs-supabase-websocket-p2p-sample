@@ -232,17 +232,26 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
     selectionBox.current.x2 = pos.x
     selectionBox.current.y2 = pos.y
 
+    const x1 = Math.min(selectionBox.current.x1, selectionBox.current.x2)
+    const y1 = Math.min(selectionBox.current.y1, selectionBox.current.y2)
+    const x2 = Math.max(selectionBox.current.x1, selectionBox.current.x2)
+    const y2 = Math.max(selectionBox.current.y1, selectionBox.current.y2)
+
     if (selectionRectRef.current) {
       selectionRectRef.current.visible(true)
-      selectionRectRef.current.width(selectionBox.current.x2 - selectionBox.current.x1)
-      selectionRectRef.current.height(selectionBox.current.y2 - selectionBox.current.y1)
-      selectionRectRef.current.x(selectionBox.current.x1)
-      selectionRectRef.current.y(selectionBox.current.y1)
+      selectionRectRef.current.x(x1)
+      selectionRectRef.current.y(y1)
+      selectionRectRef.current.width(x2 - x1)
+      selectionRectRef.current.height(y2 - y1)
     }
 
-    const box = selectionRectRef.current?.getClientRect()
-    if (!box) return
-
+    const box = {
+      x: x1,
+      y: y1,
+      width: x2 - x1,
+      height: y2 - y1,
+    }
+    
     const selected = snap.rectangles.filter((rect) =>
       Konva.Util.haveIntersection(box, {
         x: rect.x,
