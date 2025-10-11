@@ -58,13 +58,44 @@ export function setupProviders(documentName: string, ydoc: Y.Doc) {
     // Signaling servers for peer discovery across browsers/devices
     // If empty, only BroadcastChannel works (same-browser tabs only)
     signaling: signalingServers,
-    // WebRTC configuration with STUN servers
+    // WebRTC configuration with enhanced STUN/TURN servers
     peerOpts: {
+      // Enable trickle ICE for faster connection establishment
+      trickle: true,
       config: {
         iceServers: [
+          // Google STUN servers
           { urls: 'stun:stun.l.google.com:19302' },
           { urls: 'stun:stun1.l.google.com:19302' },
-        ]
+          { urls: 'stun:stun2.l.google.com:19302' },
+          { urls: 'stun:stun3.l.google.com:19302' },
+          { urls: 'stun:stun4.l.google.com:19302' },
+          // Additional public STUN servers for redundancy
+          { urls: 'stun:stun.services.mozilla.com' },
+          // Free TURN servers from Open Relay Project
+          // These help establish connections when direct P2P fails
+          {
+            urls: 'turn:openrelay.metered.ca:80',
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+          },
+          {
+            urls: 'turn:openrelay.metered.ca:443',
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+          },
+          {
+            urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+          }
+        ],
+        // ICE transport policy - use 'all' to try all connection methods
+        iceTransportPolicy: 'all',
+        // Bundle policy - use 'max-bundle' for better performance
+        bundlePolicy: 'max-bundle',
+        // RTCP mux policy - use 'require' for better NAT traversal
+        rtcpMuxPolicy: 'require'
       }
     },
     // Share awareness with Hocuspocus for presence info
@@ -98,7 +129,7 @@ export function setupProviders(documentName: string, ydoc: Y.Doc) {
   }
   
   // Debug WebRTC connection states
-  webrtcProvider.on('peers', ({ webrtcPeers, webrtcConns, bcConns }: any) => {
+  webrtcProvider.on('peers', ({ webrtcPeers, webrtcConns, bcConns, added, removed }: any) => {
     const p2pCount = Object.keys(webrtcConns || {}).length
     const bcCount = bcConns?.size || 0
     const awarenessStates = Array.from(hocuspocusProvider.awareness.getStates().keys())
@@ -111,19 +142,98 @@ export function setupProviders(documentName: string, ydoc: Y.Doc) {
       allPeers: webrtcPeers || [],
       awarenessStates: awarenessStates,
       myClientId: hocuspocusProvider.awareness.clientID,
+      peersAdded: added || [],
+      peersRemoved: removed || [],
     })
+    
+    // Log peer connection/disconnection events
+    if (added && added.length > 0) {
+      console.log('✅ New peers discovered:', added)
+    }
+    if (removed && removed.length > 0) {
+      console.warn('⚠️ Peers disconnected:', removed)
+    }
+    
+    // Detailed connection status
+    if (p2pCount > 0) {
+      console.log(`🎉 Successfully established ${p2pCount} P2P connection(s)!`)
+    } else if (webrtcPeers && webrtcPeers.length > 0) {
+      console.warn(`⚠️ Peers discovered (${webrtcPeers.length}) but no P2P connections established yet`)
+      console.log('💡 Tip: This may be normal during initial connection or due to NAT/firewall')
+    }
   })
   
   webrtcProvider.on('synced', ({ synced }: any) => {
     if (synced) {
       console.log('✅ WebRTC P2P synchronized')
+    } else {
+      console.log('⏳ WebRTC P2P syncing...')
     }
   })
   
   // Additional debugging events
-  webrtcProvider.on('status', ({ status }: any) => {
-    console.log('📡 WebRTC status:', status)
+  webrtcProvider.on('status', ({ connected }: any) => {
+    console.log(`📡 WebRTC provider status: ${connected ? 'connected' : 'disconnected'}`)
   })
+  
+  // Access internal WebRTC peer connections for detailed debugging
+  // This helps identify ICE connection failures
+  if (typeof window !== 'undefined') {
+    setTimeout(() => {
+      const room = (webrtcProvider as any).room
+      if (room && room.webrtcConns) {
+        console.log('🔍 Inspecting WebRTC peer connections...')
+        room.webrtcConns.forEach((conn: any, peerId: string) => {
+          console.log(`  Peer ${peerId}:`, {
+            connected: conn.connected,
+            synced: conn.synced,
+            closed: conn.closed,
+          })
+          
+          // Access the underlying simple-peer instance for ICE debugging
+          if (conn.peer && conn.peer._pc) {
+            const pc = conn.peer._pc
+            console.log(`  → RTCPeerConnection state:`, {
+              connectionState: pc.connectionState,
+              iceConnectionState: pc.iceConnectionState,
+              iceGatheringState: pc.iceGatheringState,
+              signalingState: pc.signalingState,
+            })
+            
+            // Monitor ICE connection state changes
+            pc.addEventListener('iceconnectionstatechange', () => {
+              console.log(`  → ICE state changed to: ${pc.iceConnectionState}`)
+              if (pc.iceConnectionState === 'failed') {
+                console.error(`  ❌ ICE connection failed for peer ${peerId}`)
+                console.log('  💡 This usually means:')
+                console.log('     - NAT/Firewall blocking connection')
+                console.log('     - STUN servers unreachable')
+                console.log('     - TURN server required but not configured properly')
+              } else if (pc.iceConnectionState === 'connected') {
+                console.log(`  ✅ ICE connection established for peer ${peerId}`)
+              }
+            })
+            
+            // Monitor connection state changes
+            pc.addEventListener('connectionstatechange', () => {
+              console.log(`  → Connection state changed to: ${pc.connectionState}`)
+            })
+            
+            // Log ICE candidates being gathered
+            pc.addEventListener('icecandidate', (event: any) => {
+              if (event.candidate) {
+                console.log(`  → ICE candidate:`, {
+                  type: event.candidate.type,
+                  protocol: event.candidate.protocol,
+                  address: event.candidate.address,
+                })
+              }
+            })
+          }
+        })
+      }
+    }, 3000) // Wait 3 seconds for connections to be established
+  }
   
   // Track peer count via Hocuspocus awareness (replaces Socket.IO peer tracking)
   const updatePeerCount = () => {
