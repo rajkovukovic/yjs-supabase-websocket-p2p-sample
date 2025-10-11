@@ -75,6 +75,42 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
   const [selecting, setSelecting] = useState(false)
   const [isCreateRectangleMode, setIsCreateRectangleMode] = useState(false)
   const [newRectangle, setNewRectangle] = useState<any[]>([])
+  const [isSpacePressed, setIsSpacePressed] = useState(false)
+  const stageRef = useRef<Konva.Stage>(null)
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        e.preventDefault()
+        setIsSpacePressed(true)
+      }
+    }
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        e.preventDefault()
+        setIsSpacePressed(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+    }
+  }, [])
+
+  useEffect(() => {
+    const stage = stageRef.current
+    if (stage) {
+      if (isSpacePressed) {
+        stage.container().style.cursor = 'grab'
+      } else if (isCreateRectangleMode) {
+        stage.container().style.cursor = 'crosshair'
+      } else {
+        stage.container().style.cursor = 'default'
+      }
+    }
+  }, [isSpacePressed, isCreateRectangleMode])
 
   const [stage, setStage] = useState({
     scale: 1,
@@ -109,6 +145,8 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
   }
 
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    if (isSpacePressed) return
+
     if (isCreateRectangleMode) {
       const stage = e.target.getStage()
       if (!stage) return
@@ -254,10 +292,11 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
     <div className="relative w-full h-full">
       <DocumentStatusToolbar documentName={documentName} />
       <Stage
+        ref={stageRef}
         width={window.innerWidth}
         height={window.innerHeight}
         className="bg-gray-100"
-        draggable
+        draggable={isSpacePressed}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -280,6 +319,7 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
               key={rect.id}
               {...rect}
               isSelected={snap.selectedRectangleIds.includes(rect.id)}
+              isSpacePressed={isSpacePressed}
               onSelect={(e) => {
                 const isSelected = snap.selectedRectangleIds.includes(rect.id)
                 if (e.evt.shiftKey) {
