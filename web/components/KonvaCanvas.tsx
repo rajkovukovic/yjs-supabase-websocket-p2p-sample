@@ -262,7 +262,7 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
     }
   }
 
-  const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     if (isSpacePressed) return
 
     if (isCreateRectangleMode) {
@@ -287,7 +287,7 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
     selectionBox.current = { x1: pos.x, y1: pos.y, x2: pos.x, y2: pos.y }
   }
 
-  const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     const stage = e.target.getStage()
     if (!stage) return
 
@@ -346,7 +346,7 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
     actions.setSelectedRectangle(selected.map((rect) => rect.id))
   }
 
-  const handleMouseUp = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const handleMouseUp = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     if (isCreateRectangleMode) {
       if (newRectangle.length > 0) {
         const rect = newRectangle[0]
@@ -430,6 +430,9 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onTouchStart={handleMouseDown}
+        onTouchMove={handleMouseMove}
+        onTouchEnd={handleMouseUp}
         onDragEnd={handleDragEnd}
         scaleX={stage.scale}
         scaleY={stage.scale}
