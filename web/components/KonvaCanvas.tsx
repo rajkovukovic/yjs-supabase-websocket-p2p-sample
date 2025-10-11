@@ -7,6 +7,7 @@ import { documentState, actions } from '../store/document'
 import { useYDoc, useAwareness } from '../hooks/useYjs'
 import Konva from 'konva'
 import Rectangle from './Rectangle'
+import { CanvasCursors } from './Cursors'
 import { DocumentStatusToolbar } from './DocumentStatusToolbar'
 import { ZoomControlsAndStatus } from './ZoomControlsAndStatus'
 
@@ -99,6 +100,7 @@ const Grid = ({
 const KonvaCanvas = ({ documentName }: { documentName: string }) => {
   const snap = useSnapshot(documentState)
   const ydoc = useYDoc()
+  const awareness = useAwareness()
   const selectionRectRef = useRef<Konva.Rect>(null)
   const selectionBox = useRef({ x1: 0, y1: 0, x2: 0, y2: 0 })
   const [selecting, setSelecting] = useState(false)
@@ -108,6 +110,7 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
   const stageRef = useRef<Konva.Stage>(null)
   const transformerRef = useRef<Konva.Transformer>(null)
   const [dragContext, setDragContext] = useState<DragContext>(null)
+  const [cursors, setCursors] = useState<Map<number, any>>(new Map())
 
   useEffect(() => {
     const stage = stageRef.current
@@ -169,6 +172,28 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
       }
     }
   }, [isSpacePressed, isCreateRectangleMode])
+
+  useEffect(() => {
+    if (!awareness) return
+
+    const updateCursors = () => {
+      const states = awareness.getStates()
+      const newCursors = new Map<number, any>()
+      states.forEach((state: any, clientId: number) => {
+        if (clientId !== awareness.clientID && state.cursor) {
+          newCursors.set(clientId, state)
+        }
+      })
+      setCursors(newCursors)
+    }
+
+    awareness.on('change', updateCursors)
+    updateCursors()
+
+    return () => {
+      awareness.off('change', updateCursors)
+    }
+  }, [awareness])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -263,11 +288,17 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
   }
 
   const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    const stage = e.target.getStage()
+    if (!stage) return
+
+    const pos = stage.getRelativePointerPosition()
+
+    if (pos && awareness) {
+      awareness.setLocalStateField('cursor', { x: pos.x, y: pos.y })
+    }
+
     if (isCreateRectangleMode) {
       if (newRectangle.length === 0) return
-      const stage = e.target.getStage()
-      if (!stage) return
-      const pos = stage.getRelativePointerPosition()
       if (!pos) return
       const rect = newRectangle[0]
       rect.width = pos.x - rect.x
@@ -280,9 +311,6 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
       return
     }
     e.evt.preventDefault()
-    const stage = e.target.getStage()
-    if (!stage) return
-    const pos = stage.getRelativePointerPosition()
     if (!pos) return
     selectionBox.current.x2 = pos.x
     selectionBox.current.y2 = pos.y
@@ -306,7 +334,7 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
       width: x2 - x1,
       height: y2 - y1,
     }
-    
+
     const selected = snap.rectangles.filter((rect) =>
       Konva.Util.haveIntersection(box, {
         x: rect.x,
@@ -568,6 +596,18 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
           />
         </Layer>
       </Stage>
+      <svg
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+        }}
+      >
+        <CanvasCursors cursors={cursors} stage={stage} />
+      </svg>
       <ZoomControlsAndStatus
         transformState={transformState}
         zoomIn={() => zoom('in')}

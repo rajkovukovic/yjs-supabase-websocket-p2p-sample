@@ -16,6 +16,12 @@ interface CursorState {
   shortName?: string
 }
 
+interface StageState {
+  x: number
+  y: number
+  scale: number
+}
+
 export function Cursors() {
   const awareness = useAwareness()
   const { user } = useAuth()
@@ -54,27 +60,41 @@ export function Cursors() {
 }
 
 // Export a component that can be used inside SVG
-export function CanvasCursors({ cursors }: { cursors: Map<number, CursorState> }) {
+export function CanvasCursors({
+  cursors,
+  stage,
+}: {
+  cursors: Map<number, CursorState>
+  stage: StageState
+}) {
   return (
     <>
       {Array.from(cursors.entries()).map(([clientId, state]) => {
         if (!state.cursor) return null
-        
+
         const color = state.color || '#3B82F6'
-        const shortName = state.shortName || state.name?.substring(0, 3).toUpperCase() || 'USR'
-        
+        const shortName =
+          state.shortName || state.name?.substring(0, 3).toUpperCase() || 'USR'
+
+        const cursorX = stage.x + state.cursor.x * stage.scale
+        const cursorY = stage.y + state.cursor.y * stage.scale
+
         return (
-          <g key={clientId} style={{ pointerEvents: 'none' }}>
+          <g
+            key={clientId}
+            transform={`translate(${cursorX}, ${cursorY})`}
+            style={{ pointerEvents: 'none' }}
+          >
             {/* Cursor pointer */}
             <path
-              d={`M ${state.cursor.x} ${state.cursor.y} L ${state.cursor.x + 12} ${state.cursor.y + 16} L ${state.cursor.x + 7.5} ${state.cursor.y + 9.5} L ${state.cursor.x + 2} ${state.cursor.y + 15} Z`}
+              d={`M 0 0 L 12 16 L 7.5 9.5 L 2 15 Z`}
               fill={color}
               stroke="white"
               strokeWidth="1.5"
             />
-            
+
             {/* Label with @shortName */}
-            <g transform={`translate(${state.cursor.x + 15}, ${state.cursor.y + 5})`}>
+            <g transform={`translate(15, 5)`}>
               <rect
                 x="0"
                 y="0"
