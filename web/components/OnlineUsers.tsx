@@ -10,7 +10,7 @@ export function OnlineUsers() {
   }
 
   return (
-    <div className="flex items-center gap-3 px-4">
+    <div className="flex items-center gap-3 px-4 text-select-none">
       <div className="flex items-center gap-2">
         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
         <span className="text-sm font-medium text-gray-700">

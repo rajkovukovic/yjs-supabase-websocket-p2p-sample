@@ -9,7 +9,7 @@ interface AppOnlineUsersProps {
 
 export function AppOnlineUsers({ onlineUsers }: AppOnlineUsersProps) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 text-select-none">
       <div className="flex -space-x-2">
         {onlineUsers.slice(0, 5).map((user) => (
           <div

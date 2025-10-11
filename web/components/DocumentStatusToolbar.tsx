@@ -232,7 +232,7 @@ export function DocumentStatusToolbar({
           </span>
 
           {documentPresenceUsers.length > 0 && (
-            <div className="flex -space-x-2">
+            <div className="flex -space-x-2 text-select-none">
               {documentPresenceUsers.slice(0, 5).map((user) => {
                 const hasP2PConnection = webrtcPeerIds.has(user.clientId)
                 const shortName = getShortName(user.name)

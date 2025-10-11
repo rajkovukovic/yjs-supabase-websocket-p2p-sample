@@ -1,11 +1,11 @@
 'use client'
 
 import { useMemo } from 'react'
-import { type PresenceUser } from '@/hooks/useAppPresence'
+import { type OnlineUser } from '@/hooks/useAppPresence'
 
 interface DocumentPresenceProps {
   documentName: string
-  onlineUsers: PresenceUser[]
+  onlineUsers: OnlineUser[]
   showStatusText?: boolean
 }
 
