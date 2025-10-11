@@ -52,6 +52,22 @@ export const actions = {
       yRectangles.delete(index, 1)
     }
   },
+
+  deleteRectangles(ydoc: Y.Doc, ids: string[]) {
+    ydoc.transact(() => {
+      const yRectangles = ydoc.getArray<Rectangle>('rectangles')
+      const rects = yRectangles.toArray()
+      const indicesToDelete = ids
+        .map(id => rects.findIndex(r => r.id === id))
+        .filter(index => index !== -1)
+        .sort((a, b) => b - a)
+
+      indicesToDelete.forEach(index => {
+        yRectangles.delete(index, 1)
+      })
+    })
+    documentState.selectedRectangleIds = []
+  },
   
   setSelectedRectangle(ids: string[] | string | null) {
     if (ids === null) {

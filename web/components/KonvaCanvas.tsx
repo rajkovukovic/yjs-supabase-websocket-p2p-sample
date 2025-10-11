@@ -157,6 +157,25 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
     }
   }, [isSpacePressed, isCreateRectangleMode])
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsCreateRectangleMode(false)
+        setNewRectangle([])
+      }
+      if (e.key === 'Backspace' || e.key === 'Delete') {
+        if (snap.selectedRectangleIds.length > 0) {
+          actions.deleteRectangles(ydoc, [...snap.selectedRectangleIds])
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [snap.selectedRectangleIds, ydoc, isCreateRectangleMode])
+
   const [stage, setStage] = useState(() => {
     return loadTransformState(documentName) || {
       scale: 1,
