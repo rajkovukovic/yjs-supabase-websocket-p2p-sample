@@ -16,6 +16,7 @@ import { useYDoc, useAwareness } from '../hooks/useYjs'
 import { Rectangle } from './Rectangle'
 import { ZoomControlsAndStatus } from './ZoomControlsAndStatus'
 import { CanvasCursors } from './Cursors'
+import { DocumentStatusToolbar } from './DocumentStatusToolbar'
 
 // Context for coordinate transformation
 interface CoordinateContextType {
@@ -36,11 +37,12 @@ export const useCoordinateContext = () => {
 function CanvasContent({
   isCreateRectangleMode,
   setIsCreateRectangleMode,
+  documentName,
 }: {
   isCreateRectangleMode: boolean
   setIsCreateRectangleMode: (value: boolean) => void
+  documentName: string
 }) {
-  const router = useRouter()
   const { transformState } = useTransformContext();
   const { zoomIn, zoomOut, resetTransform, setTransform } = useControls();
   const snap = useSnapshot(documentState)
@@ -388,18 +390,10 @@ function CanvasContent({
 
   return (
     <CoordinateContext.Provider value={{ getSVGPoint }}>
-      {/* Back Button - Top Left */}
-      <button
-        onClick={() => router.push('/')}
-        className="fixed top-6 left-6 z-20 bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-lg border border-gray-200/50 hover:bg-gray-50 transition-colors"
-        title="Back to Home"
-      >
-        <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
+      {/* Document Status Toolbar - Top Left */}
+      <DocumentStatusToolbar documentName={documentName} />
 
-      {/* Zoom Controls and Status Component */}
+      {/* Zoom Controls Component - Bottom Left */}
       <ZoomControlsAndStatus
         transformState={transformState}
         zoomIn={zoomIn}
@@ -507,7 +501,7 @@ function CanvasContent({
   )
 }
 
-export function Canvas() {
+export function Canvas({ documentName }: { documentName: string }) {
   const snap = useSnapshot(documentState)
   const ydoc = useYDoc()
   const [isPanning, setIsPanning] = useState(false)
@@ -536,7 +530,11 @@ export function Canvas() {
         disabled: true,
       }}
     >
-      <CanvasContent isCreateRectangleMode={isCreateRectangleMode} setIsCreateRectangleMode={setIsCreateRectangleMode} />
+      <CanvasContent 
+        isCreateRectangleMode={isCreateRectangleMode} 
+        setIsCreateRectangleMode={setIsCreateRectangleMode}
+        documentName={documentName}
+      />
     </TransformWrapper>
   )
 }

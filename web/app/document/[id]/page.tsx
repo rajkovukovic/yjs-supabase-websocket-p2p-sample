@@ -23,7 +23,7 @@ function DocumentContent({ documentName }: { documentName: string }) {
   return (
     <div className="h-screen flex flex-col">
       <div className="flex-1 relative">
-        <Canvas />
+        <Canvas documentName={documentName} />
         {/* Initialize cursors hook (manages awareness state) */}
         <Cursors />
       </div>

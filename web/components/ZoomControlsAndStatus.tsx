@@ -1,13 +1,10 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useSnapshot } from 'valtio'
-import { TransformState } from 'react-zoom-pan-pinch'
-import { documentState } from '@/store/document'
-import { useRouter } from 'next/navigation'
+import { ReactZoomPanPinchState } from 'react-zoom-pan-pinch'
 
 interface ZoomControlsAndStatusProps {
-  transformState: TransformState
+  transformState: ReactZoomPanPinchState
   zoomIn: (step: number, duration?: number, ease?: string) => void
   zoomOut: (step: number, duration?: number, ease?: string) => void
   resetTransform: (duration?: number, ease?: string) => void
@@ -23,8 +20,6 @@ export function ZoomControlsAndStatus({
   isCreateRectangleMode,
   setIsCreateRectangleMode,
 }: ZoomControlsAndStatusProps) {
-  const router = useRouter()
-  const snap = useSnapshot(documentState)
   const [showInfoPopup, setShowInfoPopup] = useState(false)
 
   const handleResetView = () => {
@@ -45,45 +40,8 @@ export function ZoomControlsAndStatus({
 
   return (
     <>
-      {/* Zoom Controls and Status - Bottom Left */}
+      {/* Zoom Controls - Bottom Left */}
       <div className="fixed bottom-6 left-6 z-20 flex items-center gap-3 bg-white/95 backdrop-blur-sm px-4 py-2.5 rounded-xl shadow-lg border border-gray-200/50">
-        {/* Sync Status */}
-        <div className={`flex items-center gap-1.5 ${snap.synced ? 'text-emerald-600' : 'text-amber-600'}`} title={snap.synced ? 'Synced' : 'Syncing...'}>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {snap.synced ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
-                <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="2s" repeatCount="indefinite" />
-              </path>
-            )}
-          </svg>
-        </div>
-
-        {/* Divider */}
-        <div className="w-px h-5 bg-gray-300" />
-
-        {/* Connection Status */}
-        <div className={`flex items-center gap-1.5 ${snap.status === 'connected' ? 'text-emerald-600' : 'text-gray-400'}`} title={`Status: ${snap.status}`}>
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-          </svg>
-        </div>
-
-        {/* Divider */}
-        <div className="w-px h-5 bg-gray-300" />
-
-        {/* Connected Peers */}
-        <div className="flex items-center gap-1.5 text-gray-700" title={`Connected peers: ${snap.peers}`}>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
-          <span className="text-sm font-medium">{snap.peers}</span>
-        </div>
-
-        {/* Divider */}
-        <div className="w-px h-5 bg-gray-300" />
-
         {/* Zoom Out */}
         <button
           onClick={() => zoomOut(0.2, 300, 'easeOut')}

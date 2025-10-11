@@ -9,6 +9,7 @@
 
 - **Next.js 14** with **React 18** and **TypeScript 5.3**; use `.tsx` for React components and `.ts` for logic.
 - **TailwindCSS 3.4** for styling with utility-first approach. Maintain dark mode via Tailwind 'class' strategy.
+- **lucide-react** for icons
 - **State Management**: Valtio 1.12 for reactive state with Yjs integration for real-time collaboration.
 - **Collaborative Editing**: Yjs 13.6 with Valtio synchronization for real-time document editing.
 - **Backend Integration**: Supabase 2.39+ for database, authentication, and real-time features.

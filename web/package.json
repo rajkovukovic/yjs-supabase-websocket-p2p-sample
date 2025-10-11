@@ -12,6 +12,7 @@
     "@hocuspocus/provider": "^2.10.0",
     "@supabase/supabase-js": "^2.39.0",
     "lib0": "^0.2.94",
+    "lucide-react": "^0.545.0",
     "next": "^14.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
