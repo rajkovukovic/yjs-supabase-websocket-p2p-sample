@@ -12,7 +12,8 @@
     "start:signaling": "node dist/signaling-server.js",
     "start": "concurrently \"npm run start:hocuspocus\" \"npm run start:signaling\"",
     "verify": "node scripts/verify-setup.js",
-    "test:connection": "node scripts/test-connection.js"
+    "test:connection": "node scripts/test-connection.js",
+    "test:socketio": "node scripts/test-socketio.js"
   },
   "dependencies": {
     "yjs": "^13.6.10",

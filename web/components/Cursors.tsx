@@ -92,7 +92,7 @@ export function CanvasCursors({ cursors }: { cursors: Map<number, CursorState> }
                 fill="white"
                 fontFamily="system-ui, -apple-system, sans-serif"
               >
-                @{shortName}
+                {shortName}
               </text>
             </g>
           </g>

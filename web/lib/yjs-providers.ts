@@ -1,9 +1,9 @@
 import * as Y from 'yjs'
 import { HocuspocusProvider } from '@hocuspocus/provider'
-import { WebrtcProvider } from 'y-webrtc'
 import { IndexeddbPersistence } from 'y-indexeddb'
+import { io, Socket } from 'socket.io-client'
 import { documentState } from '@/store/document'
-import { HOCUSPOCUS_URL, SIGNALING_URL, WEBRTC_PASSWORD } from './Env'
+import { HOCUSPOCUS_URL, SIGNALING_URL } from './Env'
 
 export function setupProviders(documentName: string, ydoc: Y.Doc) {
   // 1. IndexedDB (local persistence)
@@ -47,59 +47,79 @@ export function setupProviders(documentName: string, ydoc: Y.Doc) {
     }
   })
   
-  // 3. WebRTC (peer-to-peer) - ENABLED for P2P sync
-  // WebRTC provides direct peer-to-peer connection for faster sync
-  // Falls back to Hocuspocus if P2P connection fails
-  let webrtcProvider: WebrtcProvider | null = null
+  // 3. Socket.IO Signaling (peer-to-peer discovery)
+  // Uses Socket.IO for peer discovery and presence
+  let signalingSocket: Socket | null = null
   
-  const signalingUrl = SIGNALING_URL
-  const webrtcPassword = WEBRTC_PASSWORD
-  
-  if (signalingUrl) {
-    console.log('🔗 Initializing WebRTC with signaling server:', signalingUrl)
+  if (SIGNALING_URL) {
+    console.log('🔗 Connecting to Socket.IO signaling server:', SIGNALING_URL)
     
-    webrtcProvider = new WebrtcProvider(documentName, ydoc, {
-      signaling: [signalingUrl],
-      password: webrtcPassword || undefined,
-      awareness: hocuspocusProvider.awareness,
-      maxConns: 20,
-      filterBcConns: true,
-      peerOpts: {
-        config: {
-          iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' }
-          ]
-        }
-      }
+    signalingSocket = io(SIGNALING_URL, {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: Infinity
     })
     
-    webrtcProvider.on('synced', ({ synced }: { synced: boolean }) => {
-      console.log('✅ WebRTC synced:', synced)
+    signalingSocket.on('connect', () => {
+      console.log('✅ Socket.IO signaling connected')
+      
+      // Join the document room
+      signalingSocket?.emit('join', documentName)
     })
     
-    webrtcProvider.on('peers', ({ added, removed, webrtcPeers }: any) => {
-      documentState.peers = webrtcPeers.length
-      console.log('👥 P2P peers:', {
-        added,
-        removed,
-        total: webrtcPeers.length
+    signalingSocket.on('disconnect', (reason) => {
+      console.log('❌ Socket.IO signaling disconnected:', reason)
+      documentState.peers = 0
+    })
+    
+    signalingSocket.on('connect_error', (error) => {
+      console.error('❌ Socket.IO connection error:', error.message)
+    })
+    
+    // Handle existing peers list
+    signalingSocket.on('peers', (peers: string[]) => {
+      console.log('👥 Existing peers in room:', peers.length)
+      documentState.peers = peers.length
+    })
+    
+    // Handle new peer joining
+    signalingSocket.on('peer-joined', (peerId: string) => {
+      console.log('➕ New peer joined:', peerId)
+      
+      // Get updated room info
+      signalingSocket?.emit('room-info', documentName, (info: any) => {
+        documentState.peers = info.peerCount - 1 // Exclude self
+        console.log('👥 Total peers in room:', documentState.peers)
+      })
+    })
+    
+    // Handle peer leaving
+    signalingSocket.on('peer-left', (peerId: string) => {
+      console.log('➖ Peer left:', peerId)
+      
+      // Get updated room info
+      signalingSocket?.emit('room-info', documentName, (info: any) => {
+        documentState.peers = info.peerCount - 1 // Exclude self
+        console.log('👥 Total peers in room:', documentState.peers)
       })
     })
   } else {
-    console.warn('⚠️ NEXT_PUBLIC_SIGNALING_URL not set, WebRTC P2P disabled')
+    console.warn('⚠️ NEXT_PUBLIC_SIGNALING_URL not set, peer discovery disabled')
   }
   
   return {
     indexeddbProvider,
     hocuspocusProvider,
-    webrtcProvider,
+    signalingSocket,
     
     destroy: () => {
       indexeddbProvider.destroy()
       hocuspocusProvider.destroy()
-      if (webrtcProvider) {
-        webrtcProvider.destroy()
+      if (signalingSocket) {
+        signalingSocket.emit('leave', documentName)
+        signalingSocket.disconnect()
       }
     }
   }
