@@ -10,6 +10,30 @@ import Rectangle from './Rectangle'
 import { DocumentStatusToolbar } from './DocumentStatusToolbar'
 import { ZoomControlsAndStatus } from './ZoomControlsAndStatus'
 
+const TRANSFORM_STATE_PREFIX = 'canvas-transform-'
+
+const saveTransformState = (documentId: string, state: { x: number; y: number; scale: number }) => {
+  try {
+    const key = `${TRANSFORM_STATE_PREFIX}${documentId}`
+    localStorage.setItem(key, JSON.stringify(state))
+  } catch (error) {
+    console.error('Failed to save transform state:', error)
+  }
+}
+
+const loadTransformState = (documentId: string): { x: number; y: number; scale: number } | null => {
+  try {
+    const key = `${TRANSFORM_STATE_PREFIX}${documentId}`
+    const saved = localStorage.getItem(key)
+    if (saved) {
+      return JSON.parse(saved)
+    }
+  } catch (error) {
+    console.error('Failed to load transform state:', error)
+  }
+  return null
+}
+
 const GRID_SIZE = 50
 
 const Grid = ({
@@ -112,11 +136,17 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
     }
   }, [isSpacePressed, isCreateRectangleMode])
 
-  const [stage, setStage] = useState({
-    scale: 1,
-    x: 0,
-    y: 0,
+  const [stage, setStage] = useState(() => {
+    return loadTransformState(documentName) || {
+      scale: 1,
+      x: 0,
+      y: 0,
+    }
   })
+
+  useEffect(() => {
+    saveTransformState(documentName, stage)
+  }, [stage, documentName])
 
   const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault()
@@ -141,6 +171,14 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
       scale: newScale,
       x: pointer.x - mousePointTo.x * newScale,
       y: pointer.y - mousePointTo.y * newScale,
+    })
+  }
+
+  const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
+    setStage({
+      ...stage,
+      x: e.target.x(),
+      y: e.target.y(),
     })
   }
 
@@ -284,6 +322,7 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
     scale: stage.scale,
     positionX: stage.x,
     positionY: stage.y,
+    previousScale: stage.scale,
   }
 
   return (
@@ -299,6 +338,7 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onDragEnd={handleDragEnd}
         scaleX={stage.scale}
         scaleY={stage.scale}
         x={stage.x}
