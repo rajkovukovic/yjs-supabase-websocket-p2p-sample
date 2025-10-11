@@ -229,7 +229,7 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
   const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault()
 
-    const scaleBy = 1.1
+    const scaleBy = 1.03
     const stage = e.target.getStage()
     if (!stage) return
 
