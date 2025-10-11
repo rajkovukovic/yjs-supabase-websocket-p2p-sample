@@ -79,17 +79,20 @@ export const actions = {
     }
   },
 
-  updateRectangles(ydoc: Y.Doc, updates: { id: string; x: number; y: number }[]) {
+  updateRectangles(
+    ydoc: Y.Doc,
+    updates: (Partial<Rectangle> & { id: string })[],
+  ) {
     ydoc.transact(() => {
-      const yRectangles = ydoc.getArray('rectangles')
+      const yRectangles = ydoc.getArray<Rectangle>('rectangles')
       const rects = yRectangles.toArray()
 
       updates.forEach(update => {
-        const index = rects.findIndex((r: Rectangle) => r.id === update.id)
+        const index = rects.findIndex(r => r.id === update.id)
         if (index !== -1) {
-          const current = yRectangles.get(index) as Rectangle
+          const current = yRectangles.get(index)
           yRectangles.delete(index, 1)
-          yRectangles.insert(index, [{ ...current, x: update.x, y: update.y }])
+          yRectangles.insert(index, [{ ...current, ...update }])
         }
       })
     })

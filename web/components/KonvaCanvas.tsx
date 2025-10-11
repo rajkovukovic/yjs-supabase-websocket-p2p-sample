@@ -106,7 +106,20 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
   const [newRectangle, setNewRectangle] = useState<any[]>([])
   const [isSpacePressed, setIsSpacePressed] = useState(false)
   const stageRef = useRef<Konva.Stage>(null)
+  const transformerRef = useRef<Konva.Transformer>(null)
   const [dragContext, setDragContext] = useState<DragContext>(null)
+
+  useEffect(() => {
+    const stage = stageRef.current
+    if (!stage || !transformerRef.current) return
+
+    const selectedNodes = snap.selectedRectangleIds
+      .map((id) => stage.findOne('#' + id))
+      .filter((node): node is Konva.Node => !!node)
+
+    transformerRef.current.nodes(selectedNodes)
+    transformerRef.current.getLayer()?.batchDraw()
+  }, [snap.selectedRectangleIds])
 
   useEffect(() => {
     const handleSelectAll = (e: KeyboardEvent) => {
@@ -410,9 +423,8 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
               isSelected={snap.selectedRectangleIds.includes(rect.id)}
               isSpacePressed={isSpacePressed}
               onSelect={(e) => {
-                const isSelected = snap.selectedRectangleIds.includes(rect.id)
                 if (e.evt.shiftKey) {
-                  if (isSelected) {
+                  if (snap.selectedRectangleIds.includes(rect.id)) {
                     actions.setSelectedRectangle(
                       snap.selectedRectangleIds.filter((id) => id !== rect.id),
                     )
@@ -423,11 +435,16 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
                     ])
                   }
                 } else {
-                  actions.setSelectedRectangle(isSelected ? [] : [rect.id])
+                  actions.setSelectedRectangle(
+                    snap.selectedRectangleIds.includes(rect.id) ? [] : [rect.id],
+                  )
                 }
               }}
               onDragStart={(e) => {
-                if (snap.selectedRectangleIds.length > 1 && snap.selectedRectangleIds.includes(rect.id)) {
+                if (
+                  snap.selectedRectangleIds.length > 1 &&
+                  snap.selectedRectangleIds.includes(rect.id)
+                ) {
                   const stage = e.target.getStage()
                   const pointerPos = stage?.getPointerPosition()
                   if (!pointerPos) return
@@ -524,6 +541,31 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
             )
           })}
           <Rect ref={selectionRectRef} fill="rgba(0,0,255,0.2)" visible={false} />
+          <Transformer
+            ref={transformerRef}
+            rotateEnabled={false}
+            onTransformEnd={() => {
+              const nodes = transformerRef.current?.nodes()
+              if (!nodes) return
+
+              const updates = nodes.map((node) => {
+                const scaleX = node.scaleX()
+                const scaleY = node.scaleY()
+
+                node.scaleX(1)
+                node.scaleY(1)
+
+                return {
+                  id: node.id(),
+                  x: node.x(),
+                  y: node.y(),
+                  width: Math.max(5, node.width() * scaleX),
+                  height: Math.max(5, node.height() * scaleY),
+                }
+              })
+              actions.updateRectangles(ydoc, updates)
+            }}
+          />
         </Layer>
       </Stage>
       <ZoomControlsAndStatus
