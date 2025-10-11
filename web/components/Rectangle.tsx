@@ -78,7 +78,7 @@ const Rectangle = ({
           })
         }}
       />
-      {isSelected && <Transformer ref={trRef} />}
+      {isSelected && <Transformer ref={trRef} rotateEnabled={false} />}
     </>
   )
 }
