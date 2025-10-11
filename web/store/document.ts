@@ -62,5 +62,21 @@ export const actions = {
       documentState.selectedRectangleIds = ids
     }
   },
+
+  updateRectangles(ydoc: Y.Doc, updates: { id: string; x: number; y: number }[]) {
+    ydoc.transact(() => {
+      const yRectangles = ydoc.getArray('rectangles')
+      const rects = yRectangles.toArray()
+
+      updates.forEach(update => {
+        const index = rects.findIndex((r: Rectangle) => r.id === update.id)
+        if (index !== -1) {
+          const current = yRectangles.get(index) as Rectangle
+          yRectangles.delete(index, 1)
+          yRectangles.insert(index, [{ ...current, x: update.x, y: update.y }])
+        }
+      })
+    })
+  },
 }
 

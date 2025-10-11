@@ -10,6 +10,8 @@ interface RectangleProps extends RectangleType {
   onSelect: (e: Konva.KonvaEventObject<MouseEvent>) => void
   onChange: (newAttrs: any) => void
   isSpacePressed: boolean
+  onDragStart?: (e: Konva.KonvaEventObject<DragEvent>) => void
+  onDragMove?: (e: Konva.KonvaEventObject<DragEvent>) => void
 }
 
 const Rectangle = ({
@@ -25,6 +27,8 @@ const Rectangle = ({
   onSelect,
   onChange,
   isSpacePressed,
+  onDragStart,
+  onDragMove,
 }: RectangleProps) => {
   const shapeRef = React.useRef<Konva.Rect>(null)
   const trRef = React.useRef<Konva.Transformer>(null)
@@ -53,6 +57,8 @@ const Rectangle = ({
         draggable={!isSpacePressed}
         onClick={onSelect}
         onTap={onSelect}
+        onDragStart={onDragStart}
+        onDragMove={onDragMove}
         onDragEnd={(e) => {
           onChange({
             id,

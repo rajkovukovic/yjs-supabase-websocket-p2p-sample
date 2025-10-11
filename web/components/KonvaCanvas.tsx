@@ -10,6 +10,11 @@ import Rectangle from './Rectangle'
 import { DocumentStatusToolbar } from './DocumentStatusToolbar'
 import { ZoomControlsAndStatus } from './ZoomControlsAndStatus'
 
+type DragContext = {
+  initialPositions: Map<string, { x: number; y: number }>
+  dragStartPointerPos: { x: number; y: number }
+} | null
+
 const TRANSFORM_STATE_PREFIX = 'canvas-transform-'
 
 const saveTransformState = (documentId: string, state: { x: number; y: number; scale: number }) => {
@@ -101,6 +106,22 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
   const [newRectangle, setNewRectangle] = useState<any[]>([])
   const [isSpacePressed, setIsSpacePressed] = useState(false)
   const stageRef = useRef<Konva.Stage>(null)
+  const [dragContext, setDragContext] = useState<DragContext>(null)
+
+  useEffect(() => {
+    const handleSelectAll = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
+        e.preventDefault()
+        const allRectangleIds = snap.rectangles.map((r) => r.id)
+        actions.setSelectedRectangle(allRectangleIds)
+      }
+    }
+
+    window.addEventListener('keydown', handleSelectAll)
+    return () => {
+      window.removeEventListener('keydown', handleSelectAll)
+    }
+  }, [snap.rectangles])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -386,8 +407,86 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
                   actions.setSelectedRectangle(isSelected ? [] : [rect.id])
                 }
               }}
+              onDragStart={(e) => {
+                if (snap.selectedRectangleIds.length > 1 && snap.selectedRectangleIds.includes(rect.id)) {
+                  const stage = e.target.getStage()
+                  const pointerPos = stage?.getPointerPosition()
+                  if (!pointerPos) return
+
+                  const initialPositions = new Map<string, { x: number; y: number }>()
+                  snap.selectedRectangleIds.forEach((id) => {
+                    const r = snap.rectangles.find((r) => r.id === id)
+                    if (r) {
+                      initialPositions.set(id, { x: r.x, y: r.y })
+                    }
+                  })
+                  setDragContext({
+                    initialPositions,
+                    dragStartPointerPos: pointerPos,
+                  })
+                }
+              }}
+              onDragMove={(e) => {
+                if (dragContext) {
+                  const draggedRect = e.target
+                  const draggedRectId = draggedRect.id()
+                  const initialPos = dragContext.initialPositions.get(draggedRectId)
+                  if (!initialPos) return
+
+                  const dx = draggedRect.x() - initialPos.x
+                  const dy = draggedRect.y() - initialPos.y
+
+                  const updates = snap.selectedRectangleIds
+                    .filter((id) => id !== draggedRectId)
+                    .map((id) => {
+                      const startPos = dragContext.initialPositions.get(id)
+                      if (startPos) {
+                        return {
+                          id,
+                          x: startPos.x + dx,
+                          y: startPos.y + dy,
+                        }
+                      }
+                      return null
+                    })
+                    .filter((u): u is { id: string; x: number; y: number } => u !== null)
+
+                  if (updates.length > 0) {
+                    actions.updateRectangles(ydoc, updates)
+                  }
+                }
+              }}
               onChange={(newAttrs) => {
-                actions.updateRectangle(ydoc, newAttrs.id, newAttrs)
+                if (dragContext) {
+                  const { id: draggedId, x: finalX, y: finalY } = newAttrs
+                  const initialPos = dragContext.initialPositions.get(draggedId)
+                  if (!initialPos) {
+                    setDragContext(null)
+                    return
+                  }
+
+                  const dx = finalX - initialPos.x
+                  const dy = finalY - initialPos.y
+
+                  const finalUpdates = snap.selectedRectangleIds
+                    .map((id) => {
+                      const startPos = dragContext.initialPositions.get(id)
+                      if (startPos) {
+                        return {
+                          id: id,
+                          x: startPos.x + dx,
+                          y: startPos.y + dy,
+                        }
+                      }
+                      return null
+                    })
+                    .filter((u): u is { id: string; x: number; y: number } => u !== null)
+
+                  actions.updateRectangles(ydoc, finalUpdates)
+                  setDragContext(null)
+                } else {
+                  actions.updateRectangle(ydoc, newAttrs.id, newAttrs)
+                }
               }}
             />
           ))}
