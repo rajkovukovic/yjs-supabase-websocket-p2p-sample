@@ -3,6 +3,7 @@ import { HocuspocusProvider } from '@hocuspocus/provider'
 import { WebrtcProvider } from 'y-webrtc'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import { documentState } from '@/store/document'
+import { HOCUSPOCUS_URL, SIGNALING_URL, WEBRTC_PASSWORD } from './Env'
 
 export function setupProviders(documentName: string, ydoc: Y.Doc) {
   // 1. IndexedDB (local persistence)
@@ -14,7 +15,7 @@ export function setupProviders(documentName: string, ydoc: Y.Doc) {
   
   // 2. Hocuspocus (WebSocket, authoritative server)
   const hocuspocusProvider = new HocuspocusProvider({
-    url: process.env.NEXT_PUBLIC_HOCUSPOCUS_URL || 'ws://localhost:1234',
+    url: HOCUSPOCUS_URL,
     name: documentName,
     document: ydoc,
     
@@ -51,8 +52,8 @@ export function setupProviders(documentName: string, ydoc: Y.Doc) {
   // Falls back to Hocuspocus if P2P connection fails
   let webrtcProvider: WebrtcProvider | null = null
   
-  const signalingUrl = process.env.NEXT_PUBLIC_SIGNALING_URL
-  const webrtcPassword = process.env.NEXT_PUBLIC_WEBRTC_PASSWORD
+  const signalingUrl = SIGNALING_URL
+  const webrtcPassword = WEBRTC_PASSWORD
   
   if (signalingUrl) {
     console.log('🔗 Initializing WebRTC with signaling server:', signalingUrl)

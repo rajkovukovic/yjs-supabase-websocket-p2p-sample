@@ -5,6 +5,7 @@ import * as Y from 'yjs'
 import { HocuspocusProvider } from '@hocuspocus/provider'
 import { useAuth } from '@/hooks/useAuth'
 import { generateColorFromString, getShortName } from '@/lib/userUtils'
+import { HOCUSPOCUS_URL } from '@/lib/Env'
 
 export interface PresenceUser {
   clientId: number
@@ -29,7 +30,7 @@ const getGlobalPresenceProvider = () => {
   if (!globalProvider && !providerInitialized) {
     providerInitialized = true
     globalProvider = new HocuspocusProvider({
-      url: process.env.NEXT_PUBLIC_HOCUSPOCUS_URL || 'ws://localhost:1234',
+      url: HOCUSPOCUS_URL,
       name: '__app_presence_tracker__', // Special document name for app-level presence
       document: globalYDoc,
       token: () => 'mvp-anonymous-access',
