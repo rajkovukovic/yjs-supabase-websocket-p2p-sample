@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext } from 'react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSnapshot } from 'valtio'
 import {
@@ -10,6 +10,7 @@ import {
   useTransformContext,
   ReactZoomPanPinchRef,
   useControls,
+  ReactZoomPanPinchState,
 } from 'react-zoom-pan-pinch'
 import { documentState, actions } from '../store/document'
 import { useYDoc, useAwareness } from '../hooks/useYjs'
@@ -17,6 +18,39 @@ import { Rectangle } from './Rectangle'
 import { ZoomControlsAndStatus } from './ZoomControlsAndStatus'
 import { CanvasCursors } from './Cursors'
 import { DocumentStatusToolbar } from './DocumentStatusToolbar'
+
+// Transform state interface
+interface TransformState {
+  positionX: number
+  positionY: number
+  scale: number
+}
+
+// LocalStorage key prefix for transform states
+const TRANSFORM_STATE_PREFIX = 'canvas-transform-'
+
+// Utility functions for localStorage
+const saveTransformState = (documentId: string, state: TransformState) => {
+  try {
+    const key = `${TRANSFORM_STATE_PREFIX}${documentId}`
+    localStorage.setItem(key, JSON.stringify(state))
+  } catch (error) {
+    console.error('Failed to save transform state:', error)
+  }
+}
+
+const loadTransformState = (documentId: string): TransformState | null => {
+  try {
+    const key = `${TRANSFORM_STATE_PREFIX}${documentId}`
+    const saved = localStorage.getItem(key)
+    if (saved) {
+      return JSON.parse(saved)
+    }
+  } catch (error) {
+    console.error('Failed to load transform state:', error)
+  }
+  return null
+}
 
 // Context for coordinate transformation
 interface CoordinateContextType {
@@ -508,9 +542,30 @@ export function Canvas({ documentName }: { documentName: string }) {
   const [isCreateRectangleMode, setIsCreateRectangleMode] = useState(false)
   const transformRef = useRef<ReactZoomPanPinchRef>(null)
 
+  // Load initial transform state from localStorage
+  const [initialTransform, setInitialTransform] = useState<TransformState>(() => {
+    return loadTransformState(documentName) || {
+      positionX: 0,
+      positionY: 0,
+      scale: 1
+    }
+  })
+
+  // Save transform state to localStorage when it changes
+  const handleTransformed = useCallback((ref: ReactZoomPanPinchRef, state: ReactZoomPanPinchState) => {
+    const transformState: TransformState = {
+      positionX: state.positionX,
+      positionY: state.positionY,
+      scale: state.scale
+    }
+    saveTransformState(documentName, transformState)
+  }, [documentName])
+
   return (
     <TransformWrapper
-      initialScale={1}
+      initialScale={initialTransform.scale}
+      initialPositionX={initialTransform.positionX}
+      initialPositionY={initialTransform.positionY}
       minScale={0.1}
       maxScale={10}
       limitToBounds={false}
@@ -529,6 +584,7 @@ export function Canvas({ documentName }: { documentName: string }) {
       doubleClick={{
         disabled: true,
       }}
+      onTransformed={handleTransformed}
     >
       <CanvasContent 
         isCreateRectangleMode={isCreateRectangleMode} 
