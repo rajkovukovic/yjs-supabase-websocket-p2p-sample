@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { AuthGuard } from '@/components/AuthGuard'
 import { useAuth } from '@/hooks/useAuth'
+import { AppOnlineUsers } from '@/components/AppOnlineUsers'
 
 interface Document {
   id: string
@@ -139,7 +140,7 @@ function HomePageContent() {
           {/* Header with All Documents + User Menu + Plus button */}
           <div className="p-8 bg-gradient-to-r from-blue-600 to-indigo-600">
             <div className="flex items-center justify-between">
-              <div>
+              <div className="flex-1">
                 <h2 className="text-3xl font-bold text-white">
                   Documents
                 </h2>
@@ -147,7 +148,13 @@ function HomePageContent() {
                   {documents.length} {documents.length === 1 ? 'document' : 'documents'} total
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              
+              {/* Center: Online Users */}
+              <div className="flex-1 flex justify-center">
+                <AppOnlineUsers />
+              </div>
+              
+              <div className="flex-1 flex items-center justify-end gap-3">
                 {/* User Menu */}
                 <div className="relative">
                   <button

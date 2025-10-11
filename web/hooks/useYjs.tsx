@@ -20,6 +20,9 @@ export function YjsProvider({
   useEffect(() => {
     const providers = setupProviders(documentName, ydoc)
     
+    // Store the hocuspocus provider on the ydoc for access by other hooks
+    ;(ydoc as any)._hocuspocusProvider = providers.hocuspocusProvider
+    
     // Sync Yjs to Valtio
     const unsyncYjs = syncYjsToValtio(ydoc)
     
@@ -66,6 +69,8 @@ export function YjsProvider({
     return () => {
       clearTimeout(timeout)
       unsyncYjs()
+      // Clean up the provider reference
+      delete (ydoc as any)._hocuspocusProvider
       providers.destroy()
     }
   }, [documentName, ydoc])
