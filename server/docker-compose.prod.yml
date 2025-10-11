@@ -8,6 +8,12 @@ services:
       dockerfile: Dockerfile.hocuspocus
     ports:
       - "1234:1234"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hocuspocus.rule=Host(`yjs-draw-hocuspocus.evolucia.one`)"
+      - "traefik.http.routers.hocuspocus.entrypoints=websecure"
+      - "traefik.http.routers.hocuspocus.tls.certresolver=letsencrypt"
+      - "traefik.http.services.hocuspocus.loadbalancer.server.port=1234"
     environment:
       - NODE_ENV=production
       - SUPABASE_URL=${SUPABASE_URL}
@@ -36,6 +42,12 @@ services:
       dockerfile: Dockerfile.signaling
     ports:
       - "4444:4444"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.signaling.rule=Host(`yjs-draw-signal.evolucia.one`)"
+      - "traefik.http.routers.signaling.entrypoints=websecure"
+      - "traefik.http.routers.signaling.tls.certresolver=letsencrypt"
+      - "traefik.http.services.signaling.loadbalancer.server.port=4444"
     environment:
       - NODE_ENV=production
       - SIGNALING_PORT=4444
