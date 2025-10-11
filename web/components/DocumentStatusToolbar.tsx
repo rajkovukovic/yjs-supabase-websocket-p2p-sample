@@ -65,6 +65,7 @@ export function DocumentStatusToolbar({
             email: state.email,
             avatarUrl: state.avatarUrl,
             color: state.color,
+            device: state.device,
           })
         }
       })
@@ -255,6 +256,11 @@ export function DocumentStatusToolbar({
                     {/* Tooltip */}
                     <div className="pointer-events-none absolute top-full left-1/2 z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-1.5 text-xs text-white opacity-0 shadow-xl transition-opacity duration-200 group-hover:opacity-100">
                       <div className="font-semibold">{user.name}</div>
+                      {user.device && (
+                        <div className="text-[11px] text-gray-400">
+                          {user.device}
+                        </div>
+                      )}
                       <div className="text-[10px] text-gray-300">
                         {hasP2PConnection
                           ? 'Connected via P2P'
@@ -295,6 +301,11 @@ export function DocumentStatusToolbar({
                   </div>
                   <div className="pointer-events-none absolute top-full left-1/2 z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-1.5 text-xs text-white opacity-0 shadow-xl transition-opacity duration-200 group-hover:opacity-100">
                     <div className="font-semibold">{otherUser.name}</div>
+                    {otherUser.device && (
+                      <div className="text-[11px] text-gray-400">
+                        {otherUser.device}
+                      </div>
+                    )}
                     <div className="text-[10px] text-gray-300">Online</div>
                     <div className="absolute bottom-full left-1/2 mb-[-4px] -translate-x-1/2">
                       <div className="border-4 border-transparent border-b-gray-900" />

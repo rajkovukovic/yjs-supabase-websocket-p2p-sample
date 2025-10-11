@@ -10,6 +10,8 @@ export interface PresenceUser {
   email: string
   avatarUrl?: string
   color: string
+  cursor?: { x: number; y: number }
+  device?: string
 }
 
 const generateColorFromString = (str: string): string => {

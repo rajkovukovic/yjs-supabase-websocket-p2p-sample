@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAwareness } from '../hooks/useYjs'
 import { useAuth } from '../hooks/useAuth'
 import { generateColorFromString, getShortName } from '../lib/userUtils'
+import { getDeviceInfo } from '@/lib/deviceInfo'
 
 interface CursorState {
   cursor?: {
@@ -32,10 +33,12 @@ export function Cursors() {
     
     // Set local user info with real user data
     const userName = user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Anonymous'
+    const deviceInfo = getDeviceInfo()
     awareness.setLocalStateField('name', userName)
     awareness.setLocalStateField('email', user.email || '')
     awareness.setLocalStateField('color', generateColorFromString(user.email || 'default'))
     awareness.setLocalStateField('shortName', getShortName(userName))
+    awareness.setLocalStateField('device', deviceInfo.full)
     
     const updateCursors = () => {
       const states = awareness.getStates()

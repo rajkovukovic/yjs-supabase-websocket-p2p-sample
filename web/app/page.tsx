@@ -166,11 +166,20 @@ function HomePageContent() {
                 {/* Dropdown Menu */}
                 {showUserMenu && (
                   <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-200">
-                    <div className="px-4 py-3 border-b border-gray-100">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {user?.user_metadata?.name || 'User'}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                    <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3">
+                      {user?.user_metadata?.avatar_url && (
+                        <img
+                          src={user.user_metadata.avatar_url}
+                          alt="User avatar"
+                          className="w-10 h-10 rounded-full"
+                        />
+                      )}
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {user?.user_metadata?.name || 'User'}
+                        </p>
+                        <p className="text-xs text-gray-500">{user?.email}</p>
+                      </div>
                     </div>
                     <button
                       onClick={handleSignOut}

@@ -4,6 +4,7 @@ import React, { useEffect, useState, useContext, createContext } from 'react'
 import * as Y from 'yjs'
 import { setupProviders } from '../lib/yjs-providers'
 import { syncYjsToValtio, documentState } from '../store/document'
+import { getDeviceInfo } from '@/lib/deviceInfo'
 
 const YjsContext = createContext<Y.Doc | null>(null)
 
@@ -115,6 +116,13 @@ export function useAwareness() {
       setAwareness(provider.awareness)
     }
   }, [ydoc])
+
+  useEffect(() => {
+    if (awareness) {
+      const deviceInfo = getDeviceInfo()
+      awareness.setLocalStateField('device', deviceInfo.full)
+    }
+  }, [awareness])
   
   return awareness
 }

@@ -1,13 +1,17 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, createContext, useCallback } from 'react'
 import * as Y from 'yjs'
 import { HocuspocusProvider } from '@hocuspocus/provider'
 import { useAuth } from '@/hooks/useAuth'
-import { generateColorFromString, getShortName } from '@/lib/userUtils'
+import { generateColorFromString, getShortName, userColors } from '@/lib/userUtils'
 import { HOCUSPOCUS_URL } from '@/lib/Env'
+import { RealtimeChannel } from '@supabase/supabase-js'
+import { getDeviceInfo } from '@/lib/deviceInfo'
 
-export interface PresenceUser {
+const PRESENCE_CHANNEL = 'app-presence'
+
+export interface OnlineUser {
   clientId: number
   name: string
   shortName: string
@@ -15,6 +19,7 @@ export interface PresenceUser {
   avatarUrl?: string
   color: string
   currentDocumentId?: string | null
+  device?: string
 }
 
 // Singleton Yjs document and provider for app-level presence
@@ -42,7 +47,7 @@ const getGlobalPresenceProvider = () => {
 
 export const useAppPresence = () => {
   const { user } = useAuth()
-  const [onlineUsers, setOnlineUsers] = useState<PresenceUser[]>([])
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([])
   const [localClientId, setLocalClientId] = useState<number | null>(null)
   const [awarenessInstance, setAwarenessInstance] = useState<any>(null)
 
@@ -61,12 +66,14 @@ export const useAppPresence = () => {
 
     // Set local awareness state with user info
     const userName = user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Anonymous'
+    const deviceInfo = getDeviceInfo()
     const localState = {
       name: userName,
       email: user.email || '',
       avatarUrl: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
       color: generateColorFromString(user.email || 'default'),
       currentDocumentId: null,
+      device: deviceInfo.full,
     }
 
     awareness.setLocalState(localState)
@@ -82,7 +89,7 @@ export const useAppPresence = () => {
       
       updateTimeout = setTimeout(() => {
         const states = awareness.getStates()
-        const users: PresenceUser[] = []
+        const users: OnlineUser[] = []
 
         states.forEach((state: any, clientId: number) => {
           if (state && state.name) {
@@ -94,6 +101,7 @@ export const useAppPresence = () => {
               avatarUrl: state.avatarUrl,
               color: state.color || generateColorFromString(state.email || String(clientId)),
               currentDocumentId: state.currentDocumentId || null,
+              device: state.device,
             })
           }
         })
@@ -120,11 +128,15 @@ export const useAppPresence = () => {
     }
   }, [user])
 
-  const setCurrentDocumentId = (documentId: string | null) => {
-    if (awarenessInstance) {
-      awarenessInstance.setLocalStateField('currentDocumentId', documentId)
-    }
-  }
+  // Function to set the current document ID for presence
+  const setCurrentDocumentId = useCallback(
+    (documentId: string | null) => {
+      if (awarenessInstance) {
+        awarenessInstance.setLocalStateField('currentDocumentId', documentId)
+      }
+    },
+    [awarenessInstance]
+  )
 
   return { onlineUsers, localClientId, setCurrentDocumentId }
 }

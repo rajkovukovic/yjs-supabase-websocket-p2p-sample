@@ -1,66 +1,57 @@
 'use client'
 
-import { type PresenceUser } from '@/hooks/useAppPresence'
+import { OnlineUser } from '@/hooks/useAppPresence'
+import { getShortName } from '@/lib/userUtils'
 
 interface AppOnlineUsersProps {
-  onlineUsers: PresenceUser[]
+  onlineUsers: OnlineUser[]
 }
 
 export function AppOnlineUsers({ onlineUsers }: AppOnlineUsersProps) {
-  if (onlineUsers.length === 0) {
-    return null
-  }
-
   return (
-    <div className="flex -space-x-2">
-      {onlineUsers.map((user) => (
-        <div
-          key={user.clientId}
-          className="group relative"
-        >
-          {/* Short Name Card */}
+    <div className="flex items-center gap-2">
+      <div className="flex -space-x-2">
+        {onlineUsers.slice(0, 5).map((user) => (
           <div
-            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 ring-2 ring-blue-500 cursor-pointer"
-            style={{ backgroundColor: user.color }}
+            key={user.clientId}
+            className="group relative"
           >
-            {user.shortName}
-          </div>
-          
-          {/* Rich Tooltip with Photo and Details - Below the card */}
-          <div className="absolute top-full left-0 mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
-            {/* Tooltip Arrow - Above the card */}
-            <div className="absolute bottom-full left-5 transform -translate-x-1/2 mb-[-1px]">
-              <div className="border-8 border-transparent border-b-gray-900" />
+            <div
+              className="flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-md ring-2 ring-white"
+              style={{ backgroundColor: user.color }}
+              title={user.name}
+            >
+              {getShortName(user.name)}
             </div>
-            
-            <div className="bg-gray-900 rounded-xl shadow-2xl overflow-hidden min-w-[200px]">
-              {/* User Photo */}
-              {user.avatarUrl && (
-                <div className="p-3 bg-gradient-to-br from-gray-800 to-gray-900 flex justify-center">
-                  <img
-                    src={user.avatarUrl}
-                    alt={user.name}
-                    className="w-16 h-16 rounded-lg border-2 border-white/20"
-                  />
-                </div>
+            <div className="pointer-events-none absolute top-full left-0 z-50 mt-2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-1.5 text-xs text-white opacity-0 shadow-xl transition-opacity duration-200 group-hover:opacity-100">
+              <div className="font-semibold">{user.name}</div>
+              {user.device && (
+                <div className="text-[11px] text-gray-400">{user.device}</div>
               )}
-              
-              {/* User Details */}
-              <div className="p-3 space-y-1">
-                <div className="font-semibold text-white text-sm">{user.name}</div>
-                <div className="text-gray-300 text-xs">{user.email}</div>
-                <div className="flex items-center gap-1 mt-2 pt-2 border-t border-gray-700">
-                  <div 
-                    className="w-2 h-2 rounded-full" 
-                    style={{ backgroundColor: user.color }}
-                  />
-                  <span className="text-gray-400 text-[10px]">Online now</span>
-                </div>
+              <div className="text-[10px] text-gray-300">
+                {user.currentDocumentId
+                  ? `in ${user.currentDocumentId}`
+                  : 'Online'}
+              </div>
+              <div className="absolute bottom-full left-3">
+                <div className="border-4 border-transparent border-b-gray-900" />
               </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))}
+        {onlineUsers.length > 5 && (
+          <div
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-400 text-[10px] font-bold text-white shadow-md ring-2 ring-white"
+            title={`+${onlineUsers.length - 5} more`}
+          >
+            +{onlineUsers.length - 5}
+          </div>
+        )}
+      </div>
+      <span className="text-sm text-gray-500">
+        {onlineUsers.length} {onlineUsers.length === 1 ? 'other' : 'others'}{' '}
+        online
+      </span>
     </div>
   )
 }
