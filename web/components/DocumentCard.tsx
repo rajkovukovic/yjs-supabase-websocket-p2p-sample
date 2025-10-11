@@ -1,4 +1,5 @@
 import { DocumentPresence } from '@/components/DocumentPresence'
+import { Clock, PlusCircle } from 'lucide-react'
 
 export interface Document {
   id: string
@@ -10,6 +11,7 @@ export interface Document {
 
 interface DocumentCardProps {
   document: Document
+  index: number
   onlineUsers: any[]
   onDocumentClick: (name: string) => void
   onDeleteClick: (e: React.MouseEvent, docId: string) => void
@@ -28,6 +30,7 @@ const formatDate = (dateString: string) => {
 
 export const DocumentCard = ({
   document,
+  index,
   onlineUsers,
   onDocumentClick,
   onDeleteClick
@@ -36,46 +39,42 @@ export const DocumentCard = ({
     <div className="relative group">
       <div
         onClick={() => onDocumentClick(document.name)}
-        className="w-full text-left p-5 bg-white border border-gray-200 rounded-xl hover:border-blue-400 hover:shadow-md transition-all duration-200 hover:scale-[1.01] cursor-pointer"
+        className={`w-full text-left px-6 py-4 transition-colors duration-200 cursor-pointer border-b border-gray-100 ${
+          index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'
+        } hover:bg-blue-50/70`}
       >
-        <div className="flex items-start justify-between">
+        <div className="flex items-center justify-between">
           <div className="flex-1 min-w-0 pr-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition truncate">
+                <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition truncate">
                   {document.name}
                 </h3>
+                 <DocumentPresence documentName={document.name} onlineUsers={onlineUsers} showStatusText={false} />
               </div>
-              {/* Document Presence - Show users viewing this document */}
-              <DocumentPresence documentName={document.name} onlineUsers={onlineUsers} />
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-500">
-              <span className="flex items-center gap-1" title="Created">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 pl-[52px]">
+              <span className="flex items-center gap-1.5" title="Created">
+                <PlusCircle className="w-3.5 h-3.5" />
                 {formatDate(document.created_at)}
               </span>
-              <span className="text-gray-300">•</span>
-              <span className="flex items-center gap-1" title="Last Updated">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
+              <span className="flex items-center gap-1.5" title="Last Updated">
+                <Clock className="w-3.5 h-3.5" />
                 {formatDate(document.updated_at)}
               </span>
             </div>
             {document.metadata?.title && (
-              <p className="mt-2 text-sm text-gray-600 line-clamp-2">
+              <p className="mt-2 text-sm text-gray-600 line-clamp-2 pl-[52px]">
                 {document.metadata.title}
               </p>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
@@ -84,7 +83,7 @@ export const DocumentCard = ({
       </div>
       <button
         onClick={(e) => onDeleteClick(e, document.id)}
-        className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200 z-10"
+        className="absolute top-1/2 -translate-y-1/2 right-10 opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200 z-10"
         title="Delete document"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -6,9 +6,10 @@ import { type PresenceUser } from '@/hooks/useAppPresence'
 interface DocumentPresenceProps {
   documentName: string
   onlineUsers: PresenceUser[]
+  showStatusText?: boolean
 }
 
-export function DocumentPresence({ documentName, onlineUsers }: DocumentPresenceProps) {
+export function DocumentPresence({ documentName, onlineUsers, showStatusText = true }: DocumentPresenceProps) {
   // Filter users who are currently viewing this document - use useMemo to prevent flickering
   const usersOnDocument = useMemo(() => {
     return onlineUsers.filter(
@@ -37,13 +38,13 @@ export function DocumentPresence({ documentName, onlineUsers }: DocumentPresence
             </div>
             
             {/* Tooltip */}
-            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-xl">
+            {/* <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-xl">
               <div className="font-semibold">{user.name}</div>
-              <div className="text-gray-300 text-[10px]">Viewing now</div>
+              {showStatusText && <div className="text-gray-300 text-[10px]">Viewing now</div>}
               <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
                 <div className="border-4 border-transparent border-t-gray-900" />
               </div>
-            </div>
+            </div> */}
           </div>
         ))}
         {usersOnDocument.length > 3 && (
