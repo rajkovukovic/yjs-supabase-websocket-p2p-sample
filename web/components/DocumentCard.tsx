@@ -43,8 +43,8 @@ export const DocumentCard = ({
       >
         <div className="flex items-center justify-between">
           <div className="flex-1 min-w-0 pr-4">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="flex items-start gap-3" style={{ marginBottom: '-10px' }}>
+              <div className="flex items-start gap-3 min-w-0 flex-1">
                 <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -56,7 +56,7 @@ export const DocumentCard = ({
                  <DocumentPresence documentName={document.name} onlineUsers={onlineUsers} showStatusText={false} />
               </div>
             </div>
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 pl-[52px]">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 pl-[52px]">
               <span className="flex items-center gap-1" title="Created">
                 <Clock className="w-3 h-3" />
                 {formatDate(document.created_at)}
