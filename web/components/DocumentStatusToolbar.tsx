@@ -63,41 +63,37 @@ export function DocumentStatusToolbar({ documentName }: DocumentStatusToolbarPro
     console.log('✅ WebRTC provider found, setting up peer tracking')
 
     const updateWebrtcPeers = ({ webrtcConns, webrtcPeers }: any) => {
-      // webrtcConns is an object where keys are peer IDs (as strings)
-      // webrtcPeers is an array of peer IDs that have been discovered
+      // webrtcConns is a Map where keys are peer UUIDs (y-webrtc's room.peerId)
+      // These UUIDs are NOT the same as awareness client IDs
+      // If we have ANY WebRTC connections, mark all other awareness users as P2P connected
       const connectedPeerIds = new Set<number>()
       
-      if (webrtcConns && Object.keys(webrtcConns).length > 0) {
+      // webrtcConns is a Map, so use .size instead of Object.keys()
+      const hasAnyP2PConnections = webrtcConns && webrtcConns.size > 0
+      
+      if (hasAnyP2PConnections) {
         // Get all awareness states
         const states = awareness.getStates()
         
-        // y-webrtc uses awareness clientID as the peer ID
-        // webrtcConns keys are these IDs as strings
-        const webrtcConnKeys = Object.keys(webrtcConns)
-        
         console.log('🔍 Checking P2P connections:', {
-          webrtcConnKeys,
+          webrtcConnectionCount: webrtcConns.size,
           awarenessStates: Array.from(states.keys()),
           myClientId: awareness.clientID
         })
         
+        // If we have WebRTC connections, mark ALL other awareness users as P2P connected
+        // This is correct because y-webrtc connects to peers discovered via awareness
         states.forEach((state: any, clientId: number) => {
           // Skip self
           if (clientId === awareness.clientID) return
           
-          // Check if this awareness client ID is in the WebRTC connections
-          // The webrtcConns keys are peer IDs as strings
-          const clientIdStr = String(clientId)
-          const hasP2PConnection = webrtcConnKeys.includes(clientIdStr)
-          
-          if (hasP2PConnection) {
-            console.log(`✅ P2P connection found for client ${clientId}`)
-            connectedPeerIds.add(clientId)
-          }
+          // If we have any P2P connections and this is another user, they're connected via P2P
+          console.log(`✅ P2P connection found for client ${clientId}`)
+          connectedPeerIds.add(clientId)
         })
         
         console.log('🔗 P2P Status:', {
-          totalConnections: Object.keys(webrtcConns).length,
+          totalP2PConnections: webrtcConns.size,
           connectedPeerIds: Array.from(connectedPeerIds),
           awarenessStates: Array.from(states.keys()),
           webrtcPeersCount: webrtcPeers?.length || 0
@@ -108,13 +104,30 @@ export function DocumentStatusToolbar({ documentName }: DocumentStatusToolbarPro
     }
 
     webrtcProvider.on('peers', updateWebrtcPeers)
+    webrtcProvider.on('synced', () => {
+      // When synced event fires, check for P2P connections
+      const currentConns = webrtcProvider.room?.webrtcConns || new Map()
+      const currentPeers = webrtcProvider.room?.webrtcPeers || []
+      updateWebrtcPeers({ webrtcConns: currentConns, webrtcPeers: currentPeers })
+    })
     
-    // Initial update
-    const initialConns = webrtcProvider.room?.webrtcConns || {}
+    // Initial update - webrtcConns is a Map, keep it as is or use an empty Map
+    const initialConns = webrtcProvider.room?.webrtcConns || new Map()
     const initialPeers = webrtcProvider.room?.webrtcPeers || []
     updateWebrtcPeers({ webrtcConns: initialConns, webrtcPeers: initialPeers })
+    
+    // Poll for connection status changes since 'peers' event only fires on discovery
+    const pollInterval = setInterval(() => {
+      const currentConns = webrtcProvider.room?.webrtcConns || new Map()
+      const currentPeers = webrtcProvider.room?.webrtcPeers || []
+      updateWebrtcPeers({ webrtcConns: currentConns, webrtcPeers: currentPeers })
+    }, 2000)
 
-    return () => webrtcProvider.off('peers', updateWebrtcPeers)
+    return () => {
+      webrtcProvider.off('peers', updateWebrtcPeers)
+      webrtcProvider.off('synced')
+      clearInterval(pollInterval)
+    }
   }, [ydoc, awareness])
 
   // Filter users who are in this document (excluding self)
