@@ -98,6 +98,7 @@ import { supabase } from '@/lib/supabase'
 - If a rule conflicts with established code patterns, match the existing codebase and update this file accordingly.
 - Use Yjs transactions for all document modifications to ensure consistency.
 - Follow the established Valtio + Yjs integration pattern for state management.
+- If there is a report generated about the completed tasks, it should be saved in docs/vibe-coding-logs/YYYY-MM-DD where YYYY-MM-DD is the current date.
 
 ## Non-Goals / Don’ts
 
