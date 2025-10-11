@@ -33,17 +33,17 @@ function getRoom(roomName: string): Set<WebSocket> {
 }
 
 /**
- * Send message to all peers in a room except sender
+ * Send JSON message to a socket
  */
-function send(socket: WebSocket, roomName: string, message: Buffer) {
-  const room = rooms.get(roomName)
-  if (!room) return
-  
-  room.forEach((peer) => {
-    if (peer !== socket && peer.readyState === WebSocket.OPEN) {
-      peer.send(message)
+function sendMessage(socket: WebSocket, message: any) {
+  if (socket.readyState === WebSocket.OPEN) {
+    try {
+      socket.send(JSON.stringify(message))
+    } catch (error) {
+      console.error('[Y-WebRTC] Error sending message:', error)
+      socket.close()
     }
-  })
+  }
 }
 
 /**
@@ -53,41 +53,111 @@ function setupConnection(socket: WebSocket) {
   const subscribedRooms = new Set<string>()
   socketRooms.set(socket, subscribedRooms)
   
-  socket.on('message', (data: Buffer) => {
+  let closed = false
+  let pongReceived = true
+  
+  // Ping/pong for keepalive
+  const pingInterval = setInterval(() => {
+    if (!pongReceived) {
+      socket.close()
+      clearInterval(pingInterval)
+    } else {
+      pongReceived = false
+      try {
+        socket.ping()
+      } catch (error) {
+        socket.close()
+      }
+    }
+  }, 30000)
+  
+  socket.on('pong', () => {
+    pongReceived = true
+  })
+  
+  socket.on('message', (data: Buffer | string) => {
+    if (closed) return
+    
     try {
-      const message = new Uint8Array(data)
+      // Parse JSON message
+      const message = typeof data === 'string' ? JSON.parse(data) : JSON.parse(data.toString())
       
-      // Message format: [type, ...roomNameBytes, ...payload]
-      // type: 'subscribe' (0) or 'publish' (1)
-      const type = message[0]
+      if (!message || !message.type) {
+        console.error('[Y-WebRTC] Invalid message format:', message)
+        return
+      }
       
-      if (type === 0) {
-        // Subscribe to room
-        const roomName = Buffer.from(message.slice(1)).toString('utf8')
-        
-        if (VERBOSE) {
-          console.log(`[Y-WebRTC] Client subscribing to room: ${roomName}`)
+      switch (message.type) {
+        case 'subscribe': {
+          // Subscribe to topics (rooms)
+          const topics = message.topics || []
+          topics.forEach((roomName: string) => {
+            if (typeof roomName === 'string') {
+              if (VERBOSE) {
+                console.log(`[Y-WebRTC] Client subscribing to room: ${roomName}`)
+              }
+              
+              // Add socket to room
+              const room = getRoom(roomName)
+              room.add(socket)
+              subscribedRooms.add(roomName)
+            }
+          })
+          break
         }
         
-        // Add socket to room
-        const room = getRoom(roomName)
-        room.add(socket)
-        subscribedRooms.add(roomName)
-        
-        // Notify about new peer (send back the subscribe message to all peers)
-        send(socket, roomName, data)
-        
-      } else if (type === 1) {
-        // Publish message to room
-        const roomNameLength = message[1]
-        const roomName = Buffer.from(message.slice(2, 2 + roomNameLength)).toString('utf8')
-        
-        if (VERBOSE) {
-          console.log(`[Y-WebRTC] Client publishing to room: ${roomName}`)
+        case 'unsubscribe': {
+          // Unsubscribe from topics
+          const topics = message.topics || []
+          topics.forEach((roomName: string) => {
+            if (typeof roomName === 'string') {
+              if (VERBOSE) {
+                console.log(`[Y-WebRTC] Client unsubscribing from room: ${roomName}`)
+              }
+              
+              const room = rooms.get(roomName)
+              if (room) {
+                room.delete(socket)
+                if (room.size === 0) {
+                  rooms.delete(roomName)
+                }
+              }
+              subscribedRooms.delete(roomName)
+            }
+          })
+          break
         }
         
-        // Forward message to all peers in room
-        send(socket, roomName, data)
+        case 'publish': {
+          // Publish message to topic
+          const topic = message.topic
+          if (typeof topic === 'string') {
+            if (VERBOSE) {
+              console.log(`[Y-WebRTC] Client publishing to room: ${topic}`)
+            }
+            
+            const room = rooms.get(topic)
+            if (room) {
+              // Forward message to all peers in room except sender
+              room.forEach((peer) => {
+                if (peer !== socket && peer.readyState === WebSocket.OPEN) {
+                  sendMessage(peer, message)
+                }
+              })
+            }
+          }
+          break
+        }
+        
+        case 'ping': {
+          // Respond to ping
+          sendMessage(socket, { type: 'pong' })
+          break
+        }
+        
+        default: {
+          console.warn(`[Y-WebRTC] Unknown message type: ${message.type}`)
+        }
       }
     } catch (error) {
       console.error('[Y-WebRTC] Error processing message:', error)
@@ -95,6 +165,9 @@ function setupConnection(socket: WebSocket) {
   })
   
   socket.on('close', () => {
+    closed = true
+    clearInterval(pingInterval)
+    
     // Remove socket from all rooms
     subscribedRooms.forEach((roomName) => {
       const room = rooms.get(roomName)

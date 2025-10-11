@@ -63,7 +63,7 @@ export function DocumentStatusToolbar({ documentName }: DocumentStatusToolbarPro
     console.log('✅ WebRTC provider found, setting up peer tracking')
 
     const updateWebrtcPeers = ({ webrtcConns, webrtcPeers }: any) => {
-      // webrtcConns is an object where keys are base64-encoded peer IDs
+      // webrtcConns is an object where keys are peer IDs (as strings)
       // webrtcPeers is an array of peer IDs that have been discovered
       const connectedPeerIds = new Set<number>()
       
@@ -71,24 +71,27 @@ export function DocumentStatusToolbar({ documentName }: DocumentStatusToolbarPro
         // Get all awareness states
         const states = awareness.getStates()
         
-        // For each awareness client, check if there's a WebRTC connection
-        // y-webrtc encodes peer IDs, so we check if any connection exists
-        // and match by checking webrtcPeers array which contains discovered peer IDs
+        // y-webrtc uses awareness clientID as the peer ID
+        // webrtcConns keys are these IDs as strings
+        const webrtcConnKeys = Object.keys(webrtcConns)
+        
+        console.log('🔍 Checking P2P connections:', {
+          webrtcConnKeys,
+          awarenessStates: Array.from(states.keys()),
+          myClientId: awareness.clientID
+        })
+        
         states.forEach((state: any, clientId: number) => {
           // Skip self
           if (clientId === awareness.clientID) return
           
-          // Check if this peer has an active WebRTC connection
-          // The webrtcConns keys are encoded peer IDs, so we check if the peer
-          // is in the webrtcPeers array (which contains all discovered peers)
-          // and if there are active connections
-          const peerIdInConns = Object.keys(webrtcConns).some(connKey => {
-            // The connection key format varies, but if we have any connections
-            // and this peer is in awareness, they're likely connected via P2P
-            return true // We'll verify by checking if webrtcPeers includes them
-          })
+          // Check if this awareness client ID is in the WebRTC connections
+          // The webrtcConns keys are peer IDs as strings
+          const clientIdStr = String(clientId)
+          const hasP2PConnection = webrtcConnKeys.includes(clientIdStr)
           
-          if (peerIdInConns && webrtcPeers && webrtcPeers.length > 0) {
+          if (hasP2PConnection) {
+            console.log(`✅ P2P connection found for client ${clientId}`)
             connectedPeerIds.add(clientId)
           }
         })
