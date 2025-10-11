@@ -4,6 +4,7 @@ A production-ready collaborative graphic editor built with Yjs, React, and Supab
 
 ## ✨ Features
 
+- 🔐 **Google OAuth Authentication** - Secure sign-in with Google accounts
 - 🎨 **Real-time Collaboration** - Multiple users editing simultaneously
 - 📡 **Offline Support** - Works without internet using IndexedDB
 - 🚀 **Low Latency** - Sub-50ms updates via WebRTC P2P
@@ -196,22 +197,27 @@ Visit `http://localhost:3000/document/test`
 - **PostgreSQL** - Server-side persistence
 - **WebRTC** - Peer-to-peer sync
 
-## 🔐 Security Considerations
+## 🔐 Authentication & Security
 
-**Current MVP Setup:**
-- ✅ Public read/write (no authentication)
-- ✅ CORS enabled for all origins
+**Implemented:**
+- ✅ Google OAuth authentication via Supabase Auth
+- ✅ Protected routes - all pages require sign-in
+- ✅ User session management
 - ✅ Service keys in environment variables
 
+**Setup Required:**
+- Configure Google OAuth credentials in Google Cloud Console
+- Enable Google provider in Supabase dashboard
+- See [Authentication Setup Guide](./web/AUTH_SETUP.md) for detailed instructions
+
 **Production Recommendations:**
-- [ ] Implement Supabase Auth
-- [ ] Add Row Level Security (RLS)
+- [ ] Add Row Level Security (RLS) to Supabase tables
 - [ ] Restrict CORS to specific domains
 - [ ] Add rate limiting
-- [ ] Implement access controls
+- [ ] Implement document-level permissions
 - [ ] Use secrets management
 
-See [Security Guide](./SECURITY.md) for details.
+See [Authentication Setup](./web/AUTH_SETUP.md) for configuration details.
 
 ## 📊 Performance
 
@@ -252,6 +258,7 @@ See [Troubleshooting Guide](./TROUBLESHOOTING.md) for more.
 
 ## 📖 Documentation
 
+- [Authentication Setup](./web/AUTH_SETUP.md) - **NEW!** Google OAuth configuration
 - [Deployment Guide](./DOCKPLOY_DEPLOYMENT_GUIDE.md) - Full Dockploy setup
 - [Quick Start](./DOCKPLOY_QUICKSTART.md) - Copy-paste configs
 - [Server Setup](./server/README.md) - Backend configuration
@@ -282,8 +289,9 @@ Built with:
 ## 🚀 What's Next?
 
 **Post-MVP Features:**
-- [ ] User authentication (Supabase Auth)
+- [x] User authentication (Supabase Auth with Google OAuth)
 - [ ] Permission system (view/edit/admin)
+- [ ] Row Level Security for user-owned documents
 - [ ] Document templates
 - [ ] Export to PNG/SVG
 - [ ] Undo/Redo with history

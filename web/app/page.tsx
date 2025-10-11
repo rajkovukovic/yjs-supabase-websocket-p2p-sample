@@ -3,6 +3,8 @@
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { AuthGuard } from '@/components/AuthGuard'
+import { useAuth } from '@/hooks/useAuth'
 
 interface Document {
   id: string
@@ -12,8 +14,9 @@ interface Document {
   updated_at: string
 }
 
-export default function HomePage() {
+function HomePageContent() {
   const router = useRouter()
+  const { user, signOut } = useAuth()
   const [documentName, setDocumentName] = useState('')
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
@@ -22,6 +25,7 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
   
   // Fetch documents on mount
   useEffect(() => {
@@ -112,6 +116,15 @@ export default function HomePage() {
     })
   }
 
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+      setShowUserMenu(false)
+    } catch (err) {
+      console.error('Error signing out:', err)
+    }
+  }
+
   // Filter documents based on search query
   const filteredDocuments = documents.filter(doc =>
     doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -123,7 +136,7 @@ export default function HomePage() {
       <div className="max-w-5xl mx-auto h-full">
         {/* Documents List */}
         <div className="bg-white md:rounded-3xl md:shadow-2xl overflow-hidden h-full flex flex-col">
-          {/* Header with All Documents + Plus button */}
+          {/* Header with All Documents + User Menu + Plus button */}
           <div className="p-8 bg-gradient-to-r from-blue-600 to-indigo-600">
             <div className="flex items-center justify-between">
               <div>
@@ -134,15 +147,68 @@ export default function HomePage() {
                   {documents.length} {documents.length === 1 ? 'document' : 'documents'} total
                 </p>
               </div>
-              <button
-                onClick={() => setShowModal(true)}
-                className="w-12 h-12 bg-white text-blue-600 rounded-xl transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105 hover:rotate-90"
-                title="Create new document"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-3">
+                {/* User Menu */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                    className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all duration-200 backdrop-blur-sm"
+                    title={user?.email || 'User menu'}
+                  >
+                    {user?.user_metadata?.avatar_url ? (
+                      <img 
+                        src={user.user_metadata.avatar_url} 
+                        alt="User avatar" 
+                        className="w-8 h-8 rounded-lg"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                    )}
+                    <span className="text-sm font-medium hidden sm:inline">
+                      {user?.user_metadata?.name || user?.email?.split('@')[0] || 'User'}
+                    </span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {/* Dropdown Menu */}
+                  {showUserMenu && (
+                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl py-2 z-50 border border-gray-100">
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {user?.user_metadata?.name || 'User'}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                      </div>
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Create Document Button */}
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="w-12 h-12 bg-white text-blue-600 rounded-xl transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105 hover:rotate-90"
+                  title="Create new document"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -373,7 +439,23 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      {/* Click outside to close user menu */}
+      {showUserMenu && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setShowUserMenu(false)}
+        />
+      )}
     </div>
+  )
+}
+
+export default function HomePage() {
+  return (
+    <AuthGuard>
+      <HomePageContent />
+    </AuthGuard>
   )
 }
 
