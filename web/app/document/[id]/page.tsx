@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { YjsProvider } from '@/hooks/useYjs'
-import { Canvas } from '@/components/Canvas'
+import KonvaCanvas from '@/components/KonvaCanvas'
 import { Cursors } from '@/components/Cursors'
 import { AuthGuard } from '@/components/AuthGuard'
 import { useAppPresence } from '@/hooks/useAppPresence'
@@ -23,7 +23,7 @@ function DocumentContent({ documentName }: { documentName: string }) {
   return (
     <div className="h-screen flex flex-col">
       <div className="flex-1 relative">
-        <Canvas documentName={documentName} />
+        <KonvaCanvas documentName={documentName} />
         {/* Initialize cursors hook (manages awareness state) */}
         <Cursors />
       </div>

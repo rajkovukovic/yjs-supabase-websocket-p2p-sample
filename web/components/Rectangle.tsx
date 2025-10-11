@@ -1,164 +1,85 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
-import { actions } from '../store/document'
-import { useYDoc } from '../hooks/useYjs'
-import { useCoordinateContext } from './Canvas'
+import React from 'react'
+import { Rect, Transformer } from 'react-konva'
 import { Rectangle as RectangleType } from '../types'
+import Konva from 'konva'
 
 interface RectangleProps extends RectangleType {
-  isSelected?: boolean
-  onSelect?: (id: string, isMultiSelect: boolean) => void
-  scale?: number
+  isSelected: boolean
+  onSelect: (e: Konva.KonvaEventObject<MouseEvent>) => void
+  onChange: (newAttrs: any) => void
 }
 
-export function Rectangle(props: RectangleProps) {
-  const ydoc = useYDoc()
-  const { getSVGPoint } = useCoordinateContext()
-  const [isDragging, setIsDragging] = useState(false)
-  const [isResizing, setIsResizing] = useState(false)
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
-  const [isSpacePressed, setIsSpacePressed] = useState(false)
-  
-  // Keyboard handlers for Space key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        setIsSpacePressed(true)
+const Rectangle = ({
+  id,
+  x,
+  y,
+  width,
+  height,
+  fill,
+  stroke,
+  strokeWidth,
+  isSelected,
+  onSelect,
+  onChange,
+}: RectangleProps) => {
+  const shapeRef = React.useRef<Konva.Rect>(null)
+  const trRef = React.useRef<Konva.Transformer>(null)
+
+  React.useEffect(() => {
+    if (isSelected) {
+      if (trRef.current) {
+        trRef.current.nodes([shapeRef.current!])
+        trRef.current.getLayer()?.batchDraw()
       }
     }
+  }, [isSelected])
 
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        setIsSpacePressed(false)
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('keyup', handleKeyUp)
-    }
-  }, [])
-
-  // Drag handlers
-  const handleMouseDown = (e: React.MouseEvent) => {
-    // If Space is pressed, don't interfere with panning - let the event bubble up
-    if (isSpacePressed) {
-      return
-    }
-
-    e.stopPropagation()
-
-    // Select rectangle when clicked
-    if (props.onSelect) {
-      const isMultiSelect = e.shiftKey
-      props.onSelect(props.id, isMultiSelect)
-    }
-
-    setIsDragging(true)
-
-    // Get SVG coordinates using the context function
-    const svgP = getSVGPoint(e.clientX, e.clientY)
-
-    // Calculate offset in SVG coordinate space
-    setDragStart({ x: svgP.x - props.x, y: svgP.y - props.y })
-  }
-  
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging && !isResizing) return
-
-    // If Space is pressed during dragging/resizing, stop the operation
-    if (isSpacePressed) {
-      setIsDragging(false)
-      setIsResizing(false)
-      return
-    }
-
-    const svgP = getSVGPoint(e.clientX, e.clientY)
-
-    if (isDragging) {
-      actions.updateRectangle(ydoc, props.id, {
-        x: svgP.x - dragStart.x,
-        y: svgP.y - dragStart.y
-      })
-    }
-
-    if (isResizing) {
-      const newWidth = Math.max(20, svgP.x - props.x)
-      const newHeight = Math.max(20, svgP.y - props.y)
-
-      actions.updateRectangle(ydoc, props.id, {
-        width: newWidth,
-        height: newHeight
-      })
-    }
-  }, [isDragging, isResizing, isSpacePressed, dragStart, ydoc, props.id, props.x, props.y, getSVGPoint])
-  
-  const handleMouseUp = () => {
-    setIsDragging(false)
-    setIsResizing(false)
-  }
-  
-  // Resize handlers (SE corner)
-  const handleResizeMouseDown = (e: React.MouseEvent) => {
-    // If Space is pressed, don't interfere with panning - let the event bubble up
-    if (isSpacePressed) {
-      return
-    }
-
-    e.stopPropagation()
-    setIsResizing(true)
-  }
-  
-  // Global event listeners
-  useEffect(() => {
-    if (isDragging || isResizing) {
-      window.addEventListener('mousemove', handleMouseMove)
-      window.addEventListener('mouseup', handleMouseUp)
-    }
-    
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
-    }
-  }, [isDragging, isResizing, handleMouseMove])
-  
-  // Calculate inverse scale for consistent visual size
-  const handleSize = (props.scale || 1) > 0 ? 6 / (props.scale || 1) : 6
-  const strokeWidth = (props.scale || 1) > 0 ? 2 / (props.scale || 1) : 2
-  
   return (
-    <g>
-      <rect
-        x={props.x}
-        y={props.y}
-        width={props.width}
-        height={props.height}
-        fill={props.fill}
-        stroke={props.isSelected ? '#2563eb' : (props.stroke || '#000')}
-        strokeWidth={props.isSelected ? 3 : (props.strokeWidth || 2)}
-        className={(isDragging || isResizing) ? 'no-transition' : ''}
-        style={{ cursor: isSpacePressed ? 'grab' : isDragging ? 'grabbing' : 'move' }}
-        onMouseDown={handleMouseDown}
+    <>
+      <Rect
+        ref={shapeRef}
+        id={id}
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        fill={fill}
+        stroke={stroke}
+        strokeWidth={strokeWidth}
+        draggable
+        onClick={onSelect}
+        onTap={onSelect}
+        onDragEnd={(e) => {
+          onChange({
+            id,
+            x: e.target.x(),
+            y: e.target.y(),
+          })
+        }}
+        onTransformEnd={() => {
+          const node = shapeRef.current
+          if (!node) return
+          const scaleX = node.scaleX()
+          const scaleY = node.scaleY()
+
+          node.scaleX(1)
+          node.scaleY(1)
+
+          onChange({
+            id,
+            x: node.x(),
+            y: node.y(),
+            width: Math.max(5, node.width() * scaleX),
+            height: Math.max(5, node.height() * scaleY),
+          })
+        }}
       />
-      
-      {/* Resize handle (SE corner) - size inversely scaled to stay consistent */}
-      {props.isSelected && (
-        <circle
-          cx={props.x + props.width}
-          cy={props.y + props.height}
-          r={handleSize}
-          fill="white"
-          stroke="#2563eb"
-          strokeWidth={strokeWidth}
-          style={{ cursor: isSpacePressed ? 'grab' : 'se-resize' }}
-          onMouseDown={handleResizeMouseDown}
-        />
-      )}
-    </g>
+      {isSelected && <Transformer ref={trRef} />}
+    </>
   )
 }
+
+export default Rectangle
 
