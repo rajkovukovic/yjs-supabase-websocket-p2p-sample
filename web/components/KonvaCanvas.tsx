@@ -111,6 +111,8 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
   const transformerRef = useRef<Konva.Transformer>(null)
   const [dragContext, setDragContext] = useState<DragContext>(null)
   const [cursors, setCursors] = useState<Map<number, any>>(new Map())
+  const lastCenter = useRef<{ x: number; y: number } | null>(null)
+  const lastDist = useRef(0)
 
   useEffect(() => {
     const stage = stageRef.current
@@ -346,6 +348,55 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
     actions.setSelectedRectangle(selected.map((rect) => rect.id))
   }
 
+  const handleTouchMove = (e: Konva.KonvaEventObject<TouchEvent>) => {
+    const touch1 = e.evt.touches[0]
+    const touch2 = e.evt.touches[1]
+    const stage = e.target.getStage()
+
+    if (touch1 && touch2 && stage) {
+      e.evt.preventDefault()
+      const p1 = { x: touch1.clientX, y: touch1.clientY }
+      const p2 = { x: touch2.clientX, y: touch2.clientY }
+
+      if (!lastCenter.current) {
+        lastCenter.current = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 }
+        return
+      }
+      const newCenter = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 }
+      const dist = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2))
+
+      if (lastDist.current === 0) {
+        lastDist.current = dist
+      }
+
+      const pointTo = {
+        x: (newCenter.x - stage.x()) / stage.scaleX(),
+        y: (newCenter.y - stage.y()) / stage.scaleY(),
+      }
+
+      const scale = stage.scaleX() * (dist / lastDist.current)
+
+      const dx = newCenter.x - lastCenter.current.x
+      const dy = newCenter.y - lastCenter.current.y
+
+      const newPos = {
+        x: newCenter.x - pointTo.x * scale + dx,
+        y: newCenter.y - pointTo.y * scale + dy,
+      }
+
+      setStage({
+        scale: scale,
+        x: newPos.x,
+        y: newPos.y,
+      })
+
+      lastDist.current = dist
+      lastCenter.current = newCenter
+    } else {
+      handleMouseMove(e)
+    }
+  }
+
   const handleMouseUp = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     if (isCreateRectangleMode) {
       if (newRectangle.length > 0) {
@@ -375,6 +426,8 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
     if (selectionRectRef.current) {
       selectionRectRef.current.visible(false)
     }
+    lastDist.current = 0
+    lastCenter.current = null
   }
 
   const zoom = (direction: 'in' | 'out') => {
@@ -431,7 +484,7 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onTouchStart={handleMouseDown}
-        onTouchMove={handleMouseMove}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleMouseUp}
         onDragEnd={handleDragEnd}
         scaleX={stage.scale}
