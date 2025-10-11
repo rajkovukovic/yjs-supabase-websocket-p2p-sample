@@ -78,7 +78,7 @@ export function CanvasCursors({ cursors }: { cursors: Map<number, CursorState> }
               <rect
                 x="0"
                 y="0"
-                width={shortName.length * 7 + 14}
+                width={shortName.length * 10 + 14}
                 height="22"
                 rx="4"
                 fill={color}
