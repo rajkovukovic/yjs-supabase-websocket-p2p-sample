@@ -50,6 +50,8 @@ services:
       - "traefik.http.services.signaling.loadbalancer.server.port=4444"
     environment:
       - NODE_ENV=production
+      - SUPABASE_URL="DUMMY_VALUE"
+      - SUPABASE_SERVICE_KEY="DUMMY_VALUE"
       - SIGNALING_PORT=4444
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
     restart: unless-stopped
