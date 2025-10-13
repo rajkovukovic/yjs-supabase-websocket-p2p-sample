@@ -26,7 +26,7 @@ A real-time collaborative graphic editing tool built with Next.js, Yjs, and Valt
 
 - Node.js 18+
 - Running Hocuspocus server on port 1234
-- Running signaling server on port 4444
+- Running signaling server on port 4445
 
 ## Installation
 
@@ -42,7 +42,7 @@ Create a `.env.local` file:
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...
 NEXT_PUBLIC_HOCUSPOCUS_URL=ws://localhost:1234
-NEXT_PUBLIC_SIGNALING_URL=ws://localhost:4444
+NEXT_PUBLIC_SIGNALING_URL=ws://localhost:4445
 ```
 
 ## Development

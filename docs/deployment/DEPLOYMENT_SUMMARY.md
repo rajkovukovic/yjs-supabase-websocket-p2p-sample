@@ -54,8 +54,8 @@ git push origin main
 **Service 2: Signaling (5 min)**
 - Dockerfile: `server/Dockerfile.signaling`
 - Context: `server`
-- Port: `4444` (WebSocket enabled)
-- Env vars: `SIGNALING_PORT=4444`
+- Port: `4445` (WebSocket enabled)
+- Env vars: `SIGNALING_PORT=4445`
 
 **Service 3: Web App (5 min)**
 - Dockerfile: `web/Dockerfile`
@@ -126,7 +126,7 @@ SIGNALING_URL=wss://signaling.dockploy.app
 | Service | Dockerfile | Context | Port | WebSocket | SSL |
 |---------|-----------|---------|------|-----------|-----|
 | Hocuspocus | `server/Dockerfile.hocuspocus` | `server` | 1234 | ✅ Yes | ✅ Yes |
-| Signaling | `server/Dockerfile.signaling` | `server` | 4444 | ✅ Yes | ✅ Yes |
+| Signaling | `server/Dockerfile.signaling` | `server` | 4445 | ✅ Yes | ✅ Yes |
 | Web App | `web/Dockerfile` | `web` | 3000 | ❌ No | ✅ Yes |
 
 ---
@@ -141,7 +141,7 @@ Next.js Web App (Port 3000)
 ┌───────────────┬───────────────┐
 │               │               │
 Hocuspocus    Signaling    IndexedDB
-(Port 1234)   (Port 4444)   (Local)
+(Port 1234)   (Port 4445)   (Local)
     ↓             ↓
 Supabase      WebRTC P2P
 Database      (Direct)
@@ -196,7 +196,7 @@ Database      (Direct)
 
 ### 5. Port Numbers
 ❌ Wrong: Container port doesn't match app
-✅ Correct: Hocuspocus=1234, Signaling=4444, Web=3000
+✅ Correct: Hocuspocus=1234, Signaling=4445, Web=3000
 
 ---
 

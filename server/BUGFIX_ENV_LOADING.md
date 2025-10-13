@@ -120,11 +120,11 @@ npm run dev
 
 **Result**: ✅ Both servers start successfully
 - Hocuspocus: `ws://localhost:1234`
-- Signaling: `ws://localhost:4444`
+- Signaling: `ws://localhost:4445`
 
 **Health Check**: ✅ Passes
 ```bash
-curl http://localhost:4444/health
+curl http://localhost:4445/health
 # {"status":"ok","service":"webrtc-signaling"}
 ```
 

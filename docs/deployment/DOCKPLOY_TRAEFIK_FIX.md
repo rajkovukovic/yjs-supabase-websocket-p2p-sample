@@ -157,7 +157,7 @@ While you're in Dockploy, verify service ports:
 - Protocol: HTTP or WebSocket
 
 ### Signaling Service  
-- Container Port: **4444** ⚠️ (Check this - might show 1234)
+- Container Port: **4445** ⚠️ (Check this - might show 1234)
 - Protocol: HTTP or WebSocket
 
 ### Web Service
@@ -181,7 +181,7 @@ sudo ufw allow 22/tcp    # SSH (IMPORTANT - don't lock yourself out!)
 sudo ufw allow 80/tcp    # HTTP
 sudo ufw allow 443/tcp   # HTTPS
 sudo ufw allow 1234/tcp  # Hocuspocus
-sudo ufw allow 4444/tcp  # Signaling
+sudo ufw allow 4445/tcp  # Signaling
 sudo ufw allow 3000/tcp  # Web (if accessed directly)
 
 # Enable firewall

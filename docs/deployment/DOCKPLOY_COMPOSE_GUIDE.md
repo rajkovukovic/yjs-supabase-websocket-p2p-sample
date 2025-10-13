@@ -55,7 +55,7 @@ Instead of deploying Hocuspocus and Signaling as separate services, you can depl
 
    **Signaling Service:**
    - Service Name: `signaling`
-   - Container Port: `4444`
+   - Container Port: `4445`
    - Domain: `signaling.yourdomain.com` or subdomain
    - ☑ Enable WebSocket Support
    - ☑ Enable SSL/TLS
@@ -129,7 +129,7 @@ Services to Expose:
     - SSL: Enabled
   
   signaling:
-    - Port: 4444
+    - Port: 4445
     - Domain: signaling.yourdomain.com
     - WebSocket: Enabled
     - SSL: Enabled
@@ -242,13 +242,13 @@ services:
       context: .
       dockerfile: Dockerfile.signaling
     ports:
-      - "4444:4444"  # Expose port for Dockploy
+      - "4445:4445"  # Expose port for Dockploy
     environment:
-      - SIGNALING_PORT=4444
+      - SIGNALING_PORT=4445
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4444/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4445/health"]
       interval: 30s
 
 networks:
@@ -270,7 +270,7 @@ networks:
 │  │  🔹 hocuspocus:1234             │   │
 │  │     wss://hocuspocus.domain.com │   │
 │  │                                  │   │
-│  │  🔹 signaling:4444              │   │
+│  │  🔹 signaling:4445              │   │
 │  │     wss://signaling.domain.com  │   │
 │  └─────────────────────────────────┘   │
 │                                         │
@@ -326,7 +326,7 @@ networks:
 **Symptoms:** "Port already in use" error
 
 **Solution:**
-- Ensure no other services use ports 1234 or 4444
+- Ensure no other services use ports 1234 or 4445
 - In Dockploy, each service gets isolated networking
 
 ### Issue: Environment Variables Not Set

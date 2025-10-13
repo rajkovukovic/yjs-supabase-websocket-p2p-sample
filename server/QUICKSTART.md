@@ -61,7 +61,7 @@ Expected output:
 
 Your servers are now running:
 - **Hocuspocus**: `ws://localhost:1234` (for Yjs sync)
-- **Signaling**: `ws://localhost:4444` (for WebRTC P2P)
+- **Signaling**: `ws://localhost:4445` (for WebRTC P2P)
 
 ## Next Steps
 

@@ -66,7 +66,7 @@ This server provides two services:
    - Supabase persistence
    - Document sync
 
-2. **Signaling Server** (`:4444`)
+2. **Signaling Server** (`:4445`)
    - WebRTC P2P signaling
    - Room management
    - Peer discovery

@@ -17,7 +17,7 @@ const __dirname = dirname(__filename)
 dotenv.config({ path: join(__dirname, '..', '.env') })
 
 const HOCUSPOCUS_PORT = process.env.HOCUSPOCUS_PORT || 1234
-const SIGNALING_PORT = process.env.SIGNALING_PORT || 4444
+const SIGNALING_PORT = process.env.SIGNALING_PORT || 4445
 
 function log(type, message) {
   const colors = {
@@ -106,7 +106,7 @@ async function main() {
     log('error', 'Some tests failed')
     console.log('\n  Troubleshooting:')
     console.log('  1. Ensure servers are running: npm run dev')
-    console.log('  2. Check ports are not in use: lsof -i :1234 -i :4444')
+    console.log('  2. Check ports are not in use: lsof -i :1234 -i :4445')
     console.log('  3. Verify .env configuration')
   }
   

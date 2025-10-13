@@ -9,7 +9,7 @@
 
 import { io } from 'socket.io-client'
 
-const SIGNALING_URL = process.env.SIGNALING_URL || 'http://localhost:4444'
+const SIGNALING_URL = process.env.SIGNALING_URL || 'http://localhost:4445'
 const TEST_ROOM = 'test-document-123'
 
 console.log(`\n🧪 Testing Socket.IO Signaling Connection`)

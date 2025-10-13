@@ -28,7 +28,7 @@ Your project is now configured for **simplified Docker Compose deployment** on D
 ```
 Service 1: Backend (Docker Compose)
   ├── Hocuspocus :1234
-  └── Signaling :4444
+  └── Signaling :4445
 
 Service 2: Frontend (Docker)
   └── Next.js :3000
@@ -42,7 +42,7 @@ Service 2: Frontend (Docker)
 **Deployment:**
 ```
 Service 1: Hocuspocus :1234
-Service 2: Signaling :4444
+Service 2: Signaling :4445
 Service 3: Next.js :3000
 ```
 
@@ -106,7 +106,7 @@ CORS_ORIGIN=*
 
 **Expose Services:**
 - **hocuspocus**: Port 1234 → Domain + WebSocket + SSL
-- **signaling**: Port 4444 → Domain + WebSocket + SSL
+- **signaling**: Port 4445 → Domain + WebSocket + SSL
 
 ### 4. Deploy Frontend (Dockploy - 7 min)
 

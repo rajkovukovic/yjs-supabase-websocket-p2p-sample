@@ -112,7 +112,7 @@ useEffect(() => {
 ---
 
 ### 4. ✅ WebSocket Connection Errors
-**Error:** `WebSocket connection to 'ws://localhost:4444/' failed`
+**Error:** `WebSocket connection to 'ws://localhost:4445/' failed`
 
 **Root Cause:**
 - y-webrtc expects a specific WebSocket signaling protocol
@@ -127,7 +127,7 @@ useEffect(() => {
 ```typescript
 // Before
 const webrtcProvider = new WebrtcProvider(documentName, ydoc, {
-  signaling: [process.env.NEXT_PUBLIC_SIGNALING_URL || 'ws://localhost:4444'],
+  signaling: [process.env.NEXT_PUBLIC_SIGNALING_URL || 'ws://localhost:4445'],
   // ... config
 })
 

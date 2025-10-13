@@ -13,7 +13,7 @@ Complete guide to deploy your Yjs Rectangles Editor to Dockploy.
 Your application consists of **3 services**:
 
 1. **Hocuspocus Server** (WebSocket) - Port 1234
-2. **Signaling Server** (WebRTC) - Port 4444  
+2. **Signaling Server** (WebRTC) - Port 4445  
 3. **Next.js Web App** - Port 3000
 
 ## 📦 Step 1: Prepare Your Repository
@@ -42,7 +42,7 @@ NEXT_PUBLIC_WEBRTC_PASSWORD=your-secret-password
 SUPABASE_URL=https://xxxxx.supabase.co
 SUPABASE_SERVICE_KEY=your-service-role-key-here
 HOCUSPOCUS_PORT=1234
-SIGNALING_PORT=4444
+SIGNALING_PORT=4445
 NODE_ENV=production
 CORS_ORIGIN=*
 ```
@@ -154,12 +154,12 @@ CREATE INDEX idx_updates_created ON document_updates(created_at);
 
 3. **Environment Variables**:
    ```env
-   SIGNALING_PORT=4444
+   SIGNALING_PORT=4445
    NODE_ENV=production
    ```
 
 4. **Network Settings**:
-   - **Container Port**: `4444`
+   - **Container Port**: `4445`
    - **Protocol**: `HTTP/WebSocket`
    - Enable **WebSocket Support**
 
@@ -229,7 +229,7 @@ CREATE INDEX idx_updates_created ON document_updates(created_at);
 In Dockploy dashboard:
 1. Check **Logs** for each service
 2. Hocuspocus should show: `✅ Hocuspocus server running on port 1234`
-3. Signaling should show: `✅ Signaling server running on port 4444`
+3. Signaling should show: `✅ Signaling server running on port 4445`
 4. Web app should show: `✓ Ready in XXXms`
 
 ## 🔧 Step 5: Configure CORS (If Needed)
@@ -359,7 +359,7 @@ Before going to production:
 
 | Variable | Example | Required | Notes |
 |----------|---------|----------|-------|
-| `SIGNALING_PORT` | `4444` | ✅ | Default: 4444 |
+| `SIGNALING_PORT` | `4445` | ✅ | Default: 4445 |
 | `NODE_ENV` | `production` | ✅ | Must be production |
 
 ## 🚢 Deployment Order

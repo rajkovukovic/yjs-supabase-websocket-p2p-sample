@@ -8,7 +8,7 @@ Clean up redundant signaling infrastructure by removing Socket.IO signaling serv
 
 ## Problem Statement
 The codebase had **three** signaling-related servers/files creating confusion:
-1. `server/signaling-server.ts` - Socket.IO signaling (port 4444)
+1. `server/signaling-server.ts` - Socket.IO signaling (port 4445)
 2. `server/y-webrtc-signaling.ts` - Y-WebRTC signaling (port 4445)
 3. `web/lib/y-webrtc-socketio-signaling.ts` - Unused bridge adapter
 
@@ -306,7 +306,7 @@ This cleanup only removes **signaling-related** Socket.IO code. If you use Socke
 ## Summary
 
 ### What We Removed
-- ❌ Socket.IO signaling server (port 4444)
+- ❌ Socket.IO signaling server (port 4445)
 - ❌ Socket.IO client code
 - ❌ Unused bridge adapter
 - ❌ ~300 lines of redundant code

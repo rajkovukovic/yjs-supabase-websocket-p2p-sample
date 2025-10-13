@@ -7,7 +7,7 @@ Backend services for real-time collaborative graphic editing using Yjs CRDT.
 This server provides two main services:
 
 1. **Hocuspocus Server** (Port 1234) - WebSocket collaboration server for Yjs
-2. **Signaling Server** (Port 4444) - WebRTC signaling for peer-to-peer connections
+2. **Signaling Server** (Port 4445) - WebRTC signaling for peer-to-peer connections
 
 ```
 ┌─────────────┐
@@ -50,7 +50,7 @@ Edit `.env` with your Supabase credentials:
 SUPABASE_URL=https://xxxxx.supabase.co
 SUPABASE_SERVICE_KEY=your-service-role-key-here
 HOCUSPOCUS_PORT=1234
-SIGNALING_PORT=4444
+SIGNALING_PORT=4445
 NODE_ENV=development
 CORS_ORIGIN=*
 ```
@@ -153,7 +153,7 @@ docker-compose up -d
 ### Health Checks
 
 - Hocuspocus: WebSocket connection on `ws://localhost:1234`
-- Signaling: `http://localhost:4444/health`
+- Signaling: `http://localhost:4445/health`
 
 ## 📚 API Documentation
 
@@ -173,7 +173,7 @@ The Hocuspocus server handles:
 
 ### Signaling Server
 
-**WebSocket Endpoint**: `ws://localhost:4444`
+**WebSocket Endpoint**: `ws://localhost:4445`
 
 **Events**:
 
@@ -290,7 +290,7 @@ Docker Compose includes health checks for both services:
 ```bash
 # Find and kill process using port
 lsof -ti:1234 | xargs kill
-lsof -ti:4444 | xargs kill
+lsof -ti:4445 | xargs kill
 ```
 
 **Supabase connection error**: Check service key and URL
@@ -374,14 +374,14 @@ ws.onopen = () => console.log('Connected')
 2. **Test Signaling**:
 ```bash
 npm install -g wscat
-wscat -c ws://localhost:4444
+wscat -c ws://localhost:4445
 ```
 
 ### Health Check
 
 ```bash
 # Signaling server
-curl http://localhost:4444/health
+curl http://localhost:4445/health
 ```
 
 ## 📦 File Structure

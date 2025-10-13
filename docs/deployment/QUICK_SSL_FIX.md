@@ -133,7 +133,7 @@ Your server must allow:
 - Port **80** (HTTP - for Let's Encrypt challenge)
 - Port **443** (HTTPS)
 - Port **1234** (Hocuspocus WebSocket)
-- Port **4444** (Signaling WebSocket)
+- Port **4445** (Signaling WebSocket)
 
 ### Check Service Ports in Dockploy
 
@@ -144,8 +144,8 @@ Make sure services expose correct ports:
 - Public Port: `1234`
 
 **Signaling:**
-- Container Port: `4444`
-- Public Port: `4444`
+- Container Port: `4445`
+- Public Port: `4445`
 
 ### Still Stuck?
 

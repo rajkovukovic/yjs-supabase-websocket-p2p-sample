@@ -267,7 +267,7 @@ import http from 'http'
 import * as map from 'lib0/map'
 
 const pingTimeout = 30000
-const port = process.env.PORT || 4444
+const port = process.env.PORT || 4445
 
 // Create HTTP server (for health checks)
 const server = http.createServer((request, response) => {
@@ -522,7 +522,7 @@ console.log('Signaling server running on localhost:', port)
 npm install y-webrtc
 
 # Run signaling server
-PORT=4444 node node_modules/y-webrtc/bin/server.js
+PORT=4445 node node_modules/y-webrtc/bin/server.js
 ```
 
 #### Option 2: Docker Deployment
@@ -535,7 +535,7 @@ WORKDIR /app
 
 RUN npm install -g y-webrtc
 
-EXPOSE 4444
+EXPOSE 4445
 
 CMD ["node", "/usr/local/lib/node_modules/y-webrtc/bin/server.js"]
 ```
@@ -548,9 +548,9 @@ services:
   y-webrtc-signaling:
     build: .
     ports:
-      - "4444:4444"
+      - "4445:4445"
     environment:
-      - PORT=4444
+      - PORT=4445
     restart: unless-stopped
 ```
 
@@ -593,7 +593,7 @@ const webrtcProvider = new WebrtcProvider(
   'room-name',  // Room to join
   ydoc,         // Yjs document
   {
-    signaling: ['ws://localhost:4444'],  // Signaling server(s)
+    signaling: ['ws://localhost:4445'],  // Signaling server(s)
     peerOpts: {
       config: {
         iceServers: [
@@ -762,7 +762,7 @@ interface WebrtcProviderOptions {
 
 ```typescript
 const webrtcProvider = new WebrtcProvider('dev-room', ydoc, {
-  signaling: ['ws://localhost:4444'],
+  signaling: ['ws://localhost:4445'],
   peerOpts: {
     config: {
       iceServers: [
@@ -1093,7 +1093,7 @@ monitorICEState(webrtcProvider)
 
 ```bash
 # Enable verbose logging
-VERBOSE=true PORT=4444 node server.js
+VERBOSE=true PORT=4445 node server.js
 
 # Monitor connections
 [Y-WebRTC] Client connected
@@ -1192,7 +1192,7 @@ webrtcProvider.signalingConns.forEach(conn => {
 })
 
 // 3. Test signaling server
-fetch('http://localhost:4444')
+fetch('http://localhost:4445')
   .then(() => console.log('Signaling server reachable'))
   .catch(e => console.error('Signaling server unreachable:', e))
 ```
@@ -1423,12 +1423,12 @@ services:
     working_dir: /app
     command: sh -c "npm install y-webrtc && node node_modules/y-webrtc/bin/server.js"
     ports:
-      - "4444:4444"
+      - "4445:4445"
     environment:
-      - PORT=4444
+      - PORT=4445
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:4444"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:4445"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -1454,7 +1454,7 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/signaling.example.com/privkey.pem;
     
     location / {
-        proxy_pass http://localhost:4444;
+        proxy_pass http://localhost:4445;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -1884,11 +1884,11 @@ describe('WebRTC Provider', () => {
     const doc2 = new Y.Doc()
     
     const provider1 = new WebrtcProvider('test-room', doc1, {
-      signaling: ['ws://localhost:4444']
+      signaling: ['ws://localhost:4445']
     })
     
     const provider2 = new WebrtcProvider('test-room', doc2, {
-      signaling: ['ws://localhost:4444']
+      signaling: ['ws://localhost:4445']
     })
     
     // Wait for connection
@@ -1923,7 +1923,7 @@ describe('Integration Tests', () => {
   
   beforeAll(async () => {
     // Start signaling server
-    signalingServer = await startSignalingServer(4444)
+    signalingServer = await startSignalingServer(4445)
   })
   
   afterAll(async () => {
@@ -1937,7 +1937,7 @@ describe('Integration Tests', () => {
     for (let i = 0; i < 5; i++) {
       const doc = new Y.Doc()
       const provider = new WebrtcProvider('test', doc, {
-        signaling: ['ws://localhost:4444']
+        signaling: ['ws://localhost:4445']
       })
       peers.push({ doc, provider })
     }
@@ -1975,7 +1975,7 @@ async function loadTest() {
   for (let i = 0; i < 100; i++) {
     const doc = new Y.Doc()
     const provider = new WebrtcProvider(roomName, doc, {
-      signaling: ['ws://localhost:4444'],
+      signaling: ['ws://localhost:4445'],
       maxConns: 10  // Limit connections
     })
     

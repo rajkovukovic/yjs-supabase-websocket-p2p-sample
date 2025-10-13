@@ -14,7 +14,7 @@ import { WebrtcProvider } from 'y-webrtc'
 
 const ydoc = new Y.Doc()
 const provider = new WebrtcProvider('room-name', ydoc, {
-  signaling: ['ws://localhost:4444']
+  signaling: ['ws://localhost:4445']
 })
 ```
 
@@ -191,7 +191,7 @@ ydoc.getText('test').observe(() => {
 **Check**:
 ```bash
 # 1. Signaling server running?
-curl http://localhost:4444
+curl http://localhost:4445
 
 # 2. Correct room name?
 # Must match exactly between clients
@@ -203,7 +203,7 @@ curl http://localhost:4444
 **Fix**:
 ```typescript
 // Verify signaling URL
-signaling: ['ws://localhost:4444']  // Development
+signaling: ['ws://localhost:4445']  // Development
 signaling: ['wss://signaling.example.com']  // Production
 ```
 
@@ -447,7 +447,7 @@ http://your-server.com/document/test
 
 ```typescript
 {
-  signaling: ['ws://localhost:4444'],
+  signaling: ['ws://localhost:4445'],
   filterBcConns: false,
   peerOpts: {
     config: {

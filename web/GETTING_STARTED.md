@@ -73,7 +73,7 @@ The app works out of the box with default settings!
 ```env
 # Backend servers (defaults to localhost)
 NEXT_PUBLIC_HOCUSPOCUS_URL=ws://localhost:1234
-NEXT_PUBLIC_SIGNALING_URL=ws://localhost:4444
+NEXT_PUBLIC_SIGNALING_URL=ws://localhost:4445
 
 # Supabase (optional, for production)
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
@@ -135,7 +135,7 @@ The app will start at: **http://localhost:3000**
 2. **Update .env.local** with your IP:
    ```env
    NEXT_PUBLIC_HOCUSPOCUS_URL=ws://192.168.1.x:1234
-   NEXT_PUBLIC_SIGNALING_URL=ws://192.168.1.x:4444
+   NEXT_PUBLIC_SIGNALING_URL=ws://192.168.1.x:4445
    ```
 
 3. **Share URL** with others on same network:

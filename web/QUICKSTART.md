@@ -26,7 +26,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...
 
 # Required: Backend server URLs
 NEXT_PUBLIC_HOCUSPOCUS_URL=ws://localhost:1234
-NEXT_PUBLIC_SIGNALING_URL=ws://localhost:4444
+NEXT_PUBLIC_SIGNALING_URL=ws://localhost:4445
 ```
 
 ## Step 3: Start Backend Servers
@@ -41,7 +41,7 @@ docker-compose up
 
 This will start:
 - Hocuspocus WebSocket server on port 1234
-- Signaling server for WebRTC on port 4444
+- Signaling server for WebRTC on port 4445
 
 ## Step 4: Start the Frontend
 
@@ -83,7 +83,7 @@ npm install
 
 **Solution**: Check browser console for errors and verify:
 1. WebSocket connection to `ws://localhost:1234` is established
-2. Signaling server is accessible at `ws://localhost:4444`
+2. Signaling server is accessible at `ws://localhost:4445`
 3. No CORS errors in the console
 
 ### Issue: IndexedDB errors

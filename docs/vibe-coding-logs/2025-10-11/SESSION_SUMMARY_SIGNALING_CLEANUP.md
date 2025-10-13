@@ -26,7 +26,7 @@ User noticed the frontend showing "Connected via server" even though P2P connect
 
 ### Root Causes Discovered
 1. **Architecture Confusion**: Three signaling-related servers/files creating confusion:
-   - `server/signaling-server.ts` (Socket.IO, port 4444) - NOT used for WebRTC P2P
+   - `server/signaling-server.ts` (Socket.IO, port 4445) - NOT used for WebRTC P2P
    - `server/y-webrtc-signaling.ts` (WebSocket, port 4445) - Actually enables P2P
    - `web/lib/y-webrtc-socketio-signaling.ts` - Unused bridge adapter
 
@@ -52,7 +52,7 @@ User noticed the frontend showing "Connected via server" even though P2P connect
 │  ├─ Awareness/presence                                   │
 │  └─ Peer tracking                                        │
 │                                                           │
-│  Socket.IO Signaling (port 4444) ❌                      │
+│  Socket.IO Signaling (port 4445) ❌                      │
 │  ├─ Room management                                      │
 │  ├─ Peer tracking (REDUNDANT!)                          │
 │  └─ NOT used for WebRTC P2P!                            │
@@ -170,7 +170,7 @@ if (hasP2PConnection) {
 **Changes:**
 - Removed `signaling` service (Socket.IO)
 - Added `y-webrtc-signaling` service
-- Updated ports: 4444 → 4445
+- Updated ports: 4445 → 4445
 - Updated environment variables
 
 ```yaml
@@ -178,9 +178,9 @@ if (hasP2PConnection) {
 signaling:
   dockerfile: Dockerfile.signaling
   ports:
-    - "4444:4444"
+    - "4445:4445"
   environment:
-    - SIGNALING_PORT=4444
+    - SIGNALING_PORT=4445
 
 # NEW
 y-webrtc-signaling:

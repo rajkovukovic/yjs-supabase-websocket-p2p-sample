@@ -151,7 +151,7 @@ Web Client (Socket.IO Client) --[Socket.IO Protocol]--> ✅ Socket.IO Server
 ### 1. Server Health Check
 
 ```bash
-curl http://localhost:4444/health
+curl http://localhost:4445/health
 # Expected: {"status":"ok","service":"webrtc-signaling"}
 ```
 
@@ -210,7 +210,7 @@ Edit `web/.env.local` to use local servers:
 ```bash
 # Use local servers for development
 NEXT_PUBLIC_HOCUSPOCUS_URL='ws://localhost:1234'
-NEXT_PUBLIC_SIGNALING_URL='ws://localhost:4444'
+NEXT_PUBLIC_SIGNALING_URL='ws://localhost:4445'
 ```
 
 ### Production
@@ -226,10 +226,10 @@ NEXT_PUBLIC_SIGNALING_URL='wss://yjs-draw-signal.evolucia.one'
 
 ```bash
 # 1. Check if signaling server is running
-lsof -i :4444
+lsof -i :4445
 
 # 2. Test health endpoint
-curl http://localhost:4444/health
+curl http://localhost:4445/health
 
 # 3. Test Socket.IO connection
 cd server && pnpm run test:socketio

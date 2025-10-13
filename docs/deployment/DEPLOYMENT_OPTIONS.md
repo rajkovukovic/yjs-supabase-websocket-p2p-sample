@@ -31,7 +31,7 @@ This project supports **multiple deployment methods**. Choose based on your need
 ```
 Service 1: Backend (Docker Compose)
   ├── Hocuspocus (WebSocket) - Port 1234
-  └── Signaling (WebRTC) - Port 4444
+  └── Signaling (WebRTC) - Port 4445
 
 Service 2: Frontend (Docker)
   └── Next.js Web App - Port 3000
@@ -77,7 +77,7 @@ Service 1: Hocuspocus (Docker)
   └── WebSocket Server - Port 1234
 
 Service 2: Signaling (Docker)
-  └── WebRTC Signaling - Port 4444
+  └── WebRTC Signaling - Port 4445
 
 Service 3: Frontend (Docker)
   └── Next.js Web App - Port 3000
@@ -116,7 +116,7 @@ Service 3: Frontend (Docker)
 ```
 docker-compose up
   ├── Hocuspocus (localhost:1234)
-  ├── Signaling (localhost:4444)
+  ├── Signaling (localhost:4445)
   └── Next.js Dev Server (localhost:3000)
 ```
 

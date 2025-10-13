@@ -147,7 +147,7 @@ pnpm install
 SUPABASE_URL=https://xxxxx.supabase.co
 SUPABASE_SERVICE_KEY=your-service-role-key
 HOCUSPOCUS_PORT=1234
-SIGNALING_PORT=4444
+SIGNALING_PORT=4445
 ```
 
 **Web** (`web/.env.local`):
@@ -155,7 +155,7 @@ SIGNALING_PORT=4444
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 NEXT_PUBLIC_HOCUSPOCUS_URL=ws://localhost:1234
-NEXT_PUBLIC_SIGNALING_URL=ws://localhost:4444
+NEXT_PUBLIC_SIGNALING_URL=ws://localhost:4445
 ```
 
 ### 4. Start Development

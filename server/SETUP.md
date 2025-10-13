@@ -70,7 +70,7 @@ Before you begin, ensure you have:
    
    # Server Configuration
    HOCUSPOCUS_PORT=1234
-   SIGNALING_PORT=4444
+   SIGNALING_PORT=4445
    NODE_ENV=development
    
    # Optional: CORS Configuration
@@ -86,7 +86,7 @@ Before you begin, ensure you have:
 
    This starts:
    - Hocuspocus server on `ws://localhost:1234`
-   - Signaling server on `ws://localhost:4444`
+   - Signaling server on `ws://localhost:4445`
 
 2. **Or Start Individually**
    
@@ -111,7 +111,7 @@ Before you begin, ensure you have:
    
    ╔════════════════════════════════════════════════════════╗
    ║   🔄 WebRTC Signaling Server Running                  ║
-   ║   Port: 4444                                           ║
+   ║   Port: 4445                                           ║
    ╚════════════════════════════════════════════════════════╝
    ```
 
@@ -120,7 +120,7 @@ Before you begin, ensure you have:
 #### Test 1: Signaling Server Health Check
 
 ```bash
-curl http://localhost:4444/health
+curl http://localhost:4445/health
 ```
 
 Expected response:
@@ -139,7 +139,7 @@ ws1.onopen = () => console.log('Hocuspocus connected ✅')
 ws1.onerror = (e) => console.error('Hocuspocus error:', e)
 
 // Test Signaling
-const ws2 = new WebSocket('ws://localhost:4444')
+const ws2 = new WebSocket('ws://localhost:4445')
 ws2.onopen = () => console.log('Signaling connected ✅')
 ws2.onerror = (e) => console.error('Signaling error:', e)
 ```
@@ -211,7 +211,7 @@ docker inspect g-zero-signaling | jq '.[0].State.Health'
 ```bash
 # Find process using port
 lsof -ti:1234 | xargs kill
-lsof -ti:4444 | xargs kill
+lsof -ti:4445 | xargs kill
 
 # Or use different ports in .env
 HOCUSPOCUS_PORT=1235
@@ -240,7 +240,7 @@ curl -H "apikey: YOUR_SERVICE_KEY" \
 **Symptoms**: Client cannot connect to WebSocket
 
 **Solutions**:
-- Check firewall allows ports 1234 and 4444
+- Check firewall allows ports 1234 and 4445
 - Verify CORS_ORIGIN includes your client URL
 - Check server logs for errors
 - Ensure server is actually running

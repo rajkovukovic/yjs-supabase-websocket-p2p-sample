@@ -67,7 +67,7 @@ docker port <traefik-container-id>
 
 ### Step 3: Verify Service Configuration in Dockploy
 
-I noticed **Signaling service shows Port 1234** but it should be **4444**.
+I noticed **Signaling service shows Port 1234** but it should be **4445**.
 
 **Fix each service:**
 
@@ -86,8 +86,8 @@ I noticed **Signaling service shows Port 1234** but it should be **4444**.
 #### Signaling Service:
 1. Go to Signaling service in Dockploy
 2. **General Settings:**
-   - Container Port: `4444` ← **FIX THIS (currently shows 1234)**
-   - Target Port: `4444`
+   - Container Port: `4445` ← **FIX THIS (currently shows 1234)**
+   - Target Port: `4445`
 3. **Domain Settings:**
    - Domain: `yjs-draw-signal.evolucia.one`
    - ✅ HTTPS
@@ -269,7 +269,7 @@ Run through this checklist:
 
 - [ ] **Service ports are correct in Dockploy**
   - Hocuspocus: Port 1234 ✅
-  - Signaling: Port 4444 ⚠️ (currently shows 1234)
+  - Signaling: Port 4445 ⚠️ (currently shows 1234)
   - Web: Port 3000 ✅
 
 - [ ] **Services are running**
@@ -358,7 +358,7 @@ services:
       - "traefik.http.routers.signaling.entrypoints=websecure"
       - "traefik.http.routers.signaling.tls=true"
       - "traefik.http.routers.signaling.tls.certresolver=letsencrypt"
-      - "traefik.http.services.signaling.loadbalancer.server.port=4444"
+      - "traefik.http.services.signaling.loadbalancer.server.port=4445"
 ```
 
 ---
@@ -424,12 +424,12 @@ If issues persist, check:
 Based on your screenshots:
 
 1. ✅ DNS configured correctly (all pointing to 89.116.28.108)
-2. ❌ **Signaling service has wrong port** (shows 1234, should be 4444)
+2. ❌ **Signaling service has wrong port** (shows 1234, should be 4445)
 3. ❌ **Let's Encrypt failed** - using Traefik default cert
 4. ❌ **Bad Gateway** - services not connecting
 
 **Immediate actions:**
-1. Fix signaling port to 4444
+1. Fix signaling port to 4445
 2. Ensure port 80 is open on server
 3. Delete acme.json and restart Traefik
 4. Check Traefik logs for errors

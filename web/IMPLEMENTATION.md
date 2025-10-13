@@ -102,7 +102,7 @@ npm install
 ```bash
 # Create .env.local file
 NEXT_PUBLIC_HOCUSPOCUS_URL=ws://localhost:1234
-NEXT_PUBLIC_SIGNALING_URL=ws://localhost:4444
+NEXT_PUBLIC_SIGNALING_URL=ws://localhost:4445
 ```
 
 ### 3. Start Backend Servers
@@ -220,7 +220,7 @@ return <div>{snap.rectangles.length}</div>
 3. Update `.env.local` with your IP:
    ```
    NEXT_PUBLIC_HOCUSPOCUS_URL=ws://192.168.1.x:1234
-   NEXT_PUBLIC_SIGNALING_URL=ws://192.168.1.x:4444
+   NEXT_PUBLIC_SIGNALING_URL=ws://192.168.1.x:4445
    ```
 4. Share URL with other users on same network
 

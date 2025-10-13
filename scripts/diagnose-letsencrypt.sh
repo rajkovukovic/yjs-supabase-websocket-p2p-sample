@@ -215,7 +215,7 @@ else
         echo -e "${YELLOW}5. Alternative - Check Dockploy:${NC}"
         echo -e "   - Ensure each service has correct port configured"
         echo -e "   - Hocuspocus: Port 1234"
-        echo -e "   - Signaling: Port 4444 ${RED}(currently shows 1234 - FIX THIS!)${NC}"
+        echo -e "   - Signaling: Port 4445 ${RED}(currently shows 1234 - FIX THIS!)${NC}"
         echo -e "   - Web: Port 3000"
         echo ""
     else

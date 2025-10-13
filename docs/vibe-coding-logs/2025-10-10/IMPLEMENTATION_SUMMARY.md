@@ -20,7 +20,7 @@ The `./server` directory has been fully implemented according to `plan.md` with 
    - Peer discovery and signal relay
    - Health check endpoint
    - Graceful shutdown handling
-   - Port: 4444
+   - Port: 4445
 
 3. **Supabase Database Extension** (`extensions/supabase-db.ts`)
    - Database persistence layer

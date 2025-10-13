@@ -357,7 +357,7 @@ export function setupProviders(documentName: string, ydoc: Y.Doc) {
   const webrtcProvider = new WebrtcProvider(documentName, ydoc, {
     // Use local signaling server (from docker-compose)
     signaling: [
-      process.env.NEXT_PUBLIC_SIGNALING_URL || 'ws://localhost:4444'
+      process.env.NEXT_PUBLIC_SIGNALING_URL || 'ws://localhost:4445'
     ],
     
     // Awareness for cursor sharing
@@ -421,7 +421,7 @@ export function setupProviders(documentName: string, ydoc: Y.Doc) {
 import { Server } from 'socket.io'
 import http from 'http'
 
-const PORT = process.env.SIGNALING_PORT || 4444
+const PORT = process.env.SIGNALING_PORT || 4445
 
 const server = http.createServer()
 const io = new Server(server, {
@@ -1397,7 +1397,7 @@ COPY signaling-server.ts ./
 RUN npm install -g typescript
 RUN tsc signaling-server.ts
 
-EXPOSE 4444
+EXPOSE 4445
 
 CMD ["node", "signaling-server.js"]
 ```
@@ -1432,15 +1432,15 @@ services:
       context: .
       dockerfile: Dockerfile.signaling
     ports:
-      - "4444:4444"
+      - "4445:4445"
     environment:
       - NODE_ENV=production
-      - SIGNALING_PORT=4444
+      - SIGNALING_PORT=4445
     restart: unless-stopped
     networks:
       - collab-network
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4444"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4445"]
       interval: 30s
       timeout: 10s
       retries: 3

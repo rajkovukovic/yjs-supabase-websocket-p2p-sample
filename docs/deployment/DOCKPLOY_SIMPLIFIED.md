@@ -92,7 +92,7 @@ CREATE INDEX idx_updates_doc ON document_updates(document_name);
    - ☑ SSL/TLS
 
    **Signaling:**
-   - Port: `4444`
+   - Port: `4445`
    - Domain: `signaling.yourdomain.com`
    - ☑ WebSocket Support
    - ☑ SSL/TLS
@@ -174,7 +174,7 @@ CORS_ORIGIN=*
 #   SSL: ✓
 
 # Service: signaling
-#   Port: 4444
+#   Port: 4445
 #   Domain: signaling.yourdomain.com
 #   WebSocket: ✓
 #   SSL: ✓

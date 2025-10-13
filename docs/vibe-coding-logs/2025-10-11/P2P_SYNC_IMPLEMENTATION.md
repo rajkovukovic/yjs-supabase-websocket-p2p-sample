@@ -111,7 +111,7 @@ NEXT_PUBLIC_WEBRTC_PASSWORD=your-secure-password
 ### Local Development
 ```env
 NEXT_PUBLIC_HOCUSPOCUS_URL=ws://localhost:1234
-NEXT_PUBLIC_SIGNALING_URL=ws://localhost:4444
+NEXT_PUBLIC_SIGNALING_URL=ws://localhost:4445
 ```
 
 ## Monitoring & Debugging

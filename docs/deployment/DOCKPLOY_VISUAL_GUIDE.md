@@ -124,7 +124,7 @@ Context Path: server
 
 ```
 Key: SIGNALING_PORT
-Value: 4444
+Value: 4445
 
 Key: NODE_ENV
 Value: production
@@ -133,7 +133,7 @@ Value: production
 ### Step 4: Network Settings
 
 ```
-Container Port: 4444
+Container Port: 4445
 Protocol: HTTP
 ☑ Enable WebSocket Support
 ```
@@ -276,7 +276,7 @@ Document loaded: test
 
 **Signaling logs should show:**
 ```
-✅ Signaling server running on port 4444
+✅ Signaling server running on port 4445
 Client connected: abc123
 Client abc123 joined room test. Total: 1
 ```
@@ -307,7 +307,7 @@ Already configured in Dockerfiles:
 
 ```
 Hocuspocus: HTTP GET :1234
-Signaling: HTTP GET :4444  
+Signaling: HTTP GET :4445  
 Web App: HTTP GET :3000
 ```
 

@@ -92,7 +92,7 @@ Navigate to: **http://localhost:3000**
 ```env
 # Backend servers (required)
 NEXT_PUBLIC_HOCUSPOCUS_URL=ws://localhost:1234
-NEXT_PUBLIC_SIGNALING_URL=ws://localhost:4444
+NEXT_PUBLIC_SIGNALING_URL=ws://localhost:4445
 
 # Supabase (optional for MVP)
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co

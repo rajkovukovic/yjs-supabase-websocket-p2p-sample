@@ -5,7 +5,7 @@
 | Service | Dockerfile | Port | Domain Example |
 |---------|-----------|------|----------------|
 | **Hocuspocus** | `server/Dockerfile.hocuspocus` | 1234 | `hocuspocus.yourdomain.com` |
-| **Signaling** | `server/Dockerfile.signaling` | 4444 | `signaling.yourdomain.com` |
+| **Signaling** | `server/Dockerfile.signaling` | 4445 | `signaling.yourdomain.com` |
 | **Web App** | `web/Dockerfile` | 3000 | `app.yourdomain.com` |
 
 ---
@@ -47,13 +47,13 @@ Repository: [YOUR_GITHUB_REPO_URL]
 Branch: main
 Dockerfile Path: server/Dockerfile.signaling
 Context Path: server
-Container Port: 4444
+Container Port: 4445
 Protocol: HTTP/WebSocket (enable WebSocket)
 ```
 
 **Environment Variables:**
 ```env
-SIGNALING_PORT=4444
+SIGNALING_PORT=4445
 NODE_ENV=production
 ```
 

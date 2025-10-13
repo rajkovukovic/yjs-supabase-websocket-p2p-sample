@@ -73,13 +73,13 @@ git clone https://github.com/yjs/y-webrtc.git
 cd y-webrtc/bin
 
 # Run signaling server
-PORT=4444 node server.js
+PORT=4445 node server.js
 ```
 
 2. **Update frontend configuration:**
 ```typescript
 webrtcProvider = new WebrtcProvider(documentName, ydoc, {
-  signaling: ['ws://localhost:4444'], // Your signaling server
+  signaling: ['ws://localhost:4445'], // Your signaling server
   awareness: hocuspocusProvider.awareness,
   peerOpts: {
     config: {
