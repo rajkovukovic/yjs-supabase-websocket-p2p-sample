@@ -2,6 +2,7 @@ import { Database } from '@hocuspocus/extension-database'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import * as Y from 'yjs'
 import { decoding, encoding } from 'lib0'
+import { config } from '../config.js'
 
 // Lazy initialization of Supabase client
 // This will be initialized on first use, after config is loaded
@@ -42,7 +43,7 @@ export const SupabaseDatabase = new Database({
     try {
       const supabase = getSupabaseClient()
       const { data, error } = await supabase
-        .from('documents')
+        .from(config.tables.documents)
         .select('yjs_state')
         .eq('name', documentName)
         .single()
@@ -108,7 +109,7 @@ export const SupabaseDatabase = new Database({
       console.log(`[SupabaseDB] Storing ${buffer.length} bytes as hex string`)
       
       const { error } = await supabase
-        .from('documents')
+        .from(config.tables.documents)
         .upsert({
           name: documentName,
           yjs_state: hexString,
@@ -139,7 +140,7 @@ export async function ensureDocumentExists(documentName: string) {
     const supabase = getSupabaseClient()
     
     const { error } = await supabase
-      .from('documents')
+      .from(config.tables.documents)
       .upsert({
         name: documentName,
         yjs_state: null,
@@ -185,7 +186,7 @@ export async function storeUpdate(
     console.log(`[SupabaseDB] Storing update for ${documentName} (${buffer.length} bytes, clock: ${clock})`)
     
     const { error } = await supabase
-      .from('document_updates')
+      .from(config.tables.documentUpdates)
       .insert({
         document_name: documentName,
         update: hexString,
@@ -214,7 +215,7 @@ export async function createSnapshot(documentName: string) {
     const supabase = getSupabaseClient()
     // Get last snapshot timestamp
     const { data: lastSnapshot } = await supabase
-      .from('document_snapshots')
+      .from(config.tables.documentSnapshots)
       .select('created_at')
       .eq('document_name', documentName)
       .order('created_at', { ascending: false })
@@ -223,7 +224,7 @@ export async function createSnapshot(documentName: string) {
     
     // Get all updates since last snapshot
     const { data: updates } = await supabase
-      .from('document_updates')
+      .from(config.tables.documentUpdates)
       .select('update')
       .eq('document_name', documentName)
       .gt('created_at', lastSnapshot?.created_at || '1970-01-01')
@@ -244,7 +245,7 @@ export async function createSnapshot(documentName: string) {
     
     // Store snapshot
     await supabase
-      .from('document_snapshots')
+      .from(config.tables.documentSnapshots)
       .insert({
         document_name: documentName,
         snapshot: Buffer.from(snapshot),
@@ -256,7 +257,7 @@ export async function createSnapshot(documentName: string) {
     
     // Optional: Archive old updates (keep last 30 days)
     await supabase
-      .from('document_updates')
+      .from(config.tables.documentUpdates)
       .delete()
       .eq('document_name', documentName)
       .lt('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())

@@ -53,6 +53,11 @@ HOCUSPOCUS_PORT=1234
 SIGNALING_PORT=4445
 NODE_ENV=development
 CORS_ORIGIN=*
+
+# Optional: Database Table Names (defaults to standard names)
+# TABLE_DOCUMENTS=documents
+# TABLE_DOCUMENT_UPDATES=document_updates
+# TABLE_DOCUMENT_SNAPSHOTS=document_snapshots
 ```
 
 ### 2. Database Setup
@@ -216,6 +221,27 @@ The Hocuspocus server handles:
 - `server-shutdown` - Server is shutting down
 
 ## 🔧 Configuration
+
+### Database Table Names
+
+The server uses configurable table names that can be set via environment variables:
+
+```env
+# Optional: Custom table names (defaults shown)
+TABLE_DOCUMENTS=documents
+TABLE_DOCUMENT_UPDATES=document_updates
+TABLE_DOCUMENT_SNAPSHOTS=document_snapshots
+```
+
+**Use Cases:**
+- **Multi-tenant setups**: Use different table names per tenant
+- **Environment separation**: `prod_documents`, `staging_documents`
+- **Custom schemas**: `myapp.documents`, `collab.document_updates`
+
+**Important**: If you change table names, you must:
+1. Create the tables with your custom names in Supabase
+2. Update the schema in `supabase-schema.sql` with your table names
+3. Set the environment variables in your `.env` file
 
 ### Hocuspocus Server
 
