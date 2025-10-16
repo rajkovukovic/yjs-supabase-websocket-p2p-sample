@@ -279,7 +279,7 @@ export async function createSnapshot(documentName: string) {
 
     // Get last snapshot timestamp
     const { data: lastSnapshot } = await supabase
-      .from(config.tables.documentSnapshots)
+      .from('document_snapshots')
       .select('created_at')
       .eq('document_name', documentName)
       .order('created_at', { ascending: false })
@@ -309,7 +309,7 @@ export async function createSnapshot(documentName: string) {
     
     // Store snapshot
     await supabase
-      .from(config.tables.documentSnapshots)
+      .from('document_snapshots')
       .insert({
         document_name: documentName,
         snapshot: Buffer.from(snapshot),
