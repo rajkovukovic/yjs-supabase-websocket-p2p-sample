@@ -1,9 +1,17 @@
 import { Database } from '@hocuspocus/extension-database'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import * as Y from 'yjs'
-import { decoding, encoding } from 'lib0'
+import { decoding } from 'lib0'
+import { z } from 'zod'
 import { config } from '../config.js'
 
+// Define a simple schema for validation before storing.
+// This should ideally be shared with the frontend.
+const genericEntitySchema = z.object({
+  id: z.string().uuid(),
+  type: z.string(),
+  // Add other common fields if necessary
+})
 // Lazy initialization of Supabase client
 // This will be initialized on first use, after config is loaded
 let supabase: SupabaseClient | null = null
@@ -27,6 +35,40 @@ function getSupabaseClient() {
 }
 
 /**
+ * Parses the documentName to extract entityType and entityId.
+ * @param documentName - The name of the document, e.g., "document:123-abc".
+ * @returns An object with entityType and entityId.
+ */
+const parseDocumentName = (documentName: string) => {
+  const [entityType, entityId] = documentName.split(':')
+  if (!entityType || !entityId) {
+    throw new Error(`Invalid documentName format: ${documentName}`)
+  }
+  return { entityType, entityId }
+}
+
+/**
+ * Retrieves the table name for a given entity type from the database.
+ * @param entityType - The type of the entity (e.g., "document").
+ * @returns The corresponding table name.
+ */
+const getTableNameForEntityType = async (entityType: string): Promise<string> => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('entity_types')
+    .select('table_name')
+    .eq('name', entityType)
+    .single()
+
+  if (error || !data) {
+    console.error(`[SupabaseDB] Entity type '${entityType}' not found in entity_types table.`)
+    throw new Error(`Entity type not found: ${entityType}`)
+  }
+
+  return data.table_name
+}
+
+/**
  * Supabase Database Extension for Hocuspocus
  * 
  * This extension provides persistent storage for Yjs documents using Supabase.
@@ -41,9 +83,12 @@ export const SupabaseDatabase = new Database({
     console.log(`[SupabaseDB] Fetching document: ${documentName}`)
     
     try {
+      const { entityType } = parseDocumentName(documentName)
+      const tableName = await getTableNameForEntityType(entityType)
       const supabase = getSupabaseClient()
+
       const { data, error } = await supabase
-        .from(config.tables.documents)
+        .from(tableName)
         .select('yjs_state')
         .eq('name', documentName)
         .single()
@@ -95,10 +140,22 @@ export const SupabaseDatabase = new Database({
    * Store document updates to Supabase
    * Uses upsert to create or update the document
    */
-  store: async ({ documentName, state }) => {
+  store: async ({ documentName, state, document }) => {
     console.log(`[SupabaseDB] Storing document: ${documentName}`)
     
     try {
+      // Server-side Zod validation before storing
+      const drawables = document.getArray('drawables').toJSON()
+      const validationResult = z.array(genericEntitySchema.partial()).safeParse(drawables)
+
+      if (!validationResult.success) {
+        console.error('[SupabaseDB] Server-side validation failed:', validationResult.error)
+        // Do not store invalid data. You might want to log this or notify someone.
+        return
+      }
+
+      const { entityType } = parseDocumentName(documentName)
+      const tableName = await getTableNameForEntityType(entityType)
       const supabase = getSupabaseClient()
       
       // Convert Uint8Array to hex string for Supabase BYTEA storage
@@ -109,7 +166,7 @@ export const SupabaseDatabase = new Database({
       console.log(`[SupabaseDB] Storing ${buffer.length} bytes as hex string`)
       
       const { error } = await supabase
-        .from(config.tables.documents)
+        .from(tableName)
         .upsert({
           name: documentName,
           yjs_state: hexString,
@@ -137,10 +194,12 @@ export const SupabaseDatabase = new Database({
  */
 export async function ensureDocumentExists(documentName: string) {
   try {
+    const { entityType } = parseDocumentName(documentName)
+    const tableName = await getTableNameForEntityType(entityType)
     const supabase = getSupabaseClient()
     
     const { error } = await supabase
-      .from(config.tables.documents)
+      .from(tableName)
       .upsert({
         name: documentName,
         yjs_state: null,
@@ -172,6 +231,7 @@ export async function storeUpdate(
   clientId: number
 ) {
   try {
+    const { entityType } = parseDocumentName(documentName)
     const supabase = getSupabaseClient()
     
     // Decode clock from update for tracking
@@ -189,6 +249,7 @@ export async function storeUpdate(
       .from(config.tables.documentUpdates)
       .insert({
         document_name: documentName,
+        entity_type: entityType,
         update: hexString,
         client_id: clientId.toString(),
         clock: clock,
@@ -212,7 +273,10 @@ export async function storeUpdate(
  */
 export async function createSnapshot(documentName: string) {
   try {
+    const { entityType } = parseDocumentName(documentName)
+    const tableName = await getTableNameForEntityType(entityType)
     const supabase = getSupabaseClient()
+
     // Get last snapshot timestamp
     const { data: lastSnapshot } = await supabase
       .from(config.tables.documentSnapshots)

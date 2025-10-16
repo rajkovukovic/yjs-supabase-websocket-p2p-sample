@@ -72,8 +72,9 @@ const server = Server.configure({
   async onLoadDocument({ documentName, document }) {
     try {
       console.log(`[Hocuspocus] Document loaded: ${documentName}`)
-      const rectangles = document.getArray('rectangles')
-      console.log(`[Hocuspocus] Document has ${rectangles.length} rectangles`)
+      // Example of interacting with a generic Yjs doc
+      const drawables = document.getArray('drawables')
+      console.log(`[Hocuspocus] Document has ${drawables.length} drawables`)
     } catch (error: any) {
       console.error(`[onLoadDocument] Error:`, error?.message || error)
       console.error(`[onLoadDocument] Full error:`, error)

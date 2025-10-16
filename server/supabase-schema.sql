@@ -1,82 +1,121 @@
 -- ================================================
--- Yjs Rectangles Editor - Supabase Schema
+-- Yjs Generic Entities - Supabase Schema
 -- ================================================
 -- This schema provides persistent storage for Yjs documents
--- with support for incremental updates and snapshots.
+-- with support for incremental updates and snapshots, designed
+-- to handle arbitrary entity types.
+-- ================================================
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ================================================
--- Main Documents Table
+-- Entity Type Management
 -- ================================================
--- Stores the current state of each Yjs document
+-- This table maps entity types to their storage tables.
+CREATE TABLE IF NOT EXISTS entity_types (
+    id SERIAL PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL,
+    table_name TEXT UNIQUE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE entity_types IS 'Maps entity type names to their database table names.';
+
+-- Insert initial entity types.
+INSERT INTO entity_types (name, table_name, description) VALUES
+    ('document', 'entities', 'Generic document entities'),
+    ('user_profile', 'user_profiles', 'User profile information')
+ON CONFLICT (name) DO NOTHING;
+
+-- ================================================
+-- Generic Entities Table
+-- ================================================
+-- Stores the current state of each Yjs document for any entity type.
+CREATE TABLE IF NOT EXISTS entities (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT UNIQUE NOT NULL, -- Format: 'entityType:entityId'
+    yjs_state BYTEA,
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE entities IS 'Stores Yjs document states for various entity types.';
+COMMENT ON COLUMN entities.name IS 'Unique document identifier, e.g., ''document:my-doc-id''';
+COMMENT ON COLUMN entities.yjs_state IS 'Encoded Yjs document state as binary data';
+COMMENT ON COLUMN entities.metadata IS 'Optional entity metadata (title, tags, etc.)';
+
+-- ================================================
+-- Legacy Documents Table (to be deprecated)
+-- ================================================
+-- This table is kept for backward compatibility but will be phased out.
 CREATE TABLE IF NOT EXISTS documents (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name TEXT UNIQUE NOT NULL,
-  yjs_state BYTEA,                    -- Binary Yjs state (Y.encodeStateAsUpdate)
-  metadata JSONB DEFAULT '{}',        -- Optional metadata (title, description, etc.)
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT UNIQUE NOT NULL,
+    yjs_state BYTEA,
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Add comment for documentation
-COMMENT ON TABLE documents IS 'Stores Yjs document states for real-time collaboration';
-COMMENT ON COLUMN documents.name IS 'Unique document identifier (used by clients)';
-COMMENT ON COLUMN documents.yjs_state IS 'Encoded Yjs document state as binary data';
-COMMENT ON COLUMN documents.metadata IS 'Optional document metadata (title, tags, etc.)';
-
 -- ================================================
--- Document Updates Table
+-- Document Updates Table (Modified for Generic Entities)
 -- ================================================
--- Stores incremental updates for audit trail and debugging
+-- Stores incremental updates for any entity.
+-- NOTE: The foreign key to `documents` table is removed to support generic entities.
 CREATE TABLE IF NOT EXISTS document_updates (
-  id BIGSERIAL PRIMARY KEY,
-  document_name TEXT NOT NULL REFERENCES documents(name) ON DELETE CASCADE,
-  update BYTEA NOT NULL,              -- Individual Y.Update binary
-  client_id TEXT,                     -- Client that made the update
-  clock BIGINT,                       -- Logical clock from update
-  created_at TIMESTAMPTZ DEFAULT NOW()
+    id BIGSERIAL PRIMARY KEY,
+    document_name TEXT NOT NULL,
+    entity_type TEXT NOT NULL DEFAULT 'document', -- New column to specify entity type
+    update BYTEA NOT NULL,
+    client_id TEXT,
+    clock BIGINT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Add comment for documentation
-COMMENT ON TABLE document_updates IS 'Stores incremental Yjs updates for audit and replay';
-COMMENT ON COLUMN document_updates.update IS 'Individual Yjs update as binary data';
-COMMENT ON COLUMN document_updates.clock IS 'Logical clock value from the update';
+-- Drop old foreign key constraint if it exists
+ALTER TABLE document_updates DROP CONSTRAINT IF EXISTS document_updates_document_name_fkey;
+
+COMMENT ON TABLE document_updates IS 'Stores incremental Yjs updates for any entity type.';
+COMMENT ON COLUMN document_updates.document_name IS 'References the ''name'' in the corresponding entity table.';
+COMMENT ON COLUMN document_updates.entity_type IS 'The type of entity this update belongs to (e.g., ''document'').';
 
 -- ================================================
--- Document Snapshots Table (Optional)
+-- User Profiles Table (Example of another entity type)
 -- ================================================
--- Stores periodic snapshots to compress update history
-CREATE TABLE IF NOT EXISTS document_snapshots (
-  id BIGSERIAL PRIMARY KEY,
-  document_name TEXT NOT NULL REFERENCES documents(name) ON DELETE CASCADE,
-  snapshot BYTEA NOT NULL,            -- Snapshot of document state
-  update_count INTEGER,               -- Number of updates in this snapshot
-  created_at TIMESTAMPTZ DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS user_profiles (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT UNIQUE NOT NULL, -- 'user_profile:userId'
+    yjs_state BYTEA,
+    username TEXT,
+    bio TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Add comment for documentation
-COMMENT ON TABLE document_snapshots IS 'Periodic snapshots to compress update history';
-COMMENT ON COLUMN document_snapshots.snapshot IS 'Compressed document state snapshot';
-COMMENT ON COLUMN document_snapshots.update_count IS 'Number of updates merged into this snapshot';
+COMMENT ON TABLE user_profiles IS 'Stores user profile data managed via Yjs.';
 
 -- ================================================
 -- Indexes for Performance
 -- ================================================
 
--- Documents table indexes
-CREATE INDEX IF NOT EXISTS idx_doc_name ON documents(name);
-CREATE INDEX IF NOT EXISTS idx_doc_updated ON documents(updated_at DESC);
+-- Entity types table index
+CREATE INDEX IF NOT EXISTS idx_entity_types_name ON entity_types(name);
+
+-- Entities table indexes
+CREATE INDEX IF NOT EXISTS idx_entities_name ON entities(name);
+CREATE INDEX IF NOT EXISTS idx_entities_updated ON entities(updated_at DESC);
 
 -- Updates table indexes
 CREATE INDEX IF NOT EXISTS idx_updates_doc ON document_updates(document_name);
+CREATE INDEX IF NOT EXISTS idx_updates_entity_type ON document_updates(entity_type);
 CREATE INDEX IF NOT EXISTS idx_updates_created ON document_updates(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_updates_clock ON document_updates(clock);
 
--- Snapshots table indexes
-CREATE INDEX IF NOT EXISTS idx_snapshots_doc ON document_snapshots(document_name);
-CREATE INDEX IF NOT EXISTS idx_snapshots_created ON document_snapshots(created_at DESC);
+-- User profiles table indexes
+CREATE INDEX IF NOT EXISTS idx_user_profiles_name ON user_profiles(name);
 
 -- ================================================
 -- Triggers for Automatic Updated_at
@@ -91,106 +130,24 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger for documents table
+-- Trigger for entities table
+DROP TRIGGER IF EXISTS update_entities_updated_at ON entities;
+CREATE TRIGGER update_entities_updated_at
+    BEFORE UPDATE ON entities
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Trigger for user_profiles table
+DROP TRIGGER IF EXISTS update_user_profiles_updated_at ON user_profiles;
+CREATE TRIGGER update_user_profiles_updated_at
+    BEFORE UPDATE ON user_profiles
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- (Legacy) Trigger for documents table
 DROP TRIGGER IF EXISTS update_documents_updated_at ON documents;
 CREATE TRIGGER update_documents_updated_at
     BEFORE UPDATE ON documents
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
-
--- ================================================
--- Row Level Security (RLS) - Currently Disabled for MVP
--- ================================================
--- For production, enable RLS and add policies:
-
--- Enable RLS on documents table
--- ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
-
--- Example policy for authenticated users
--- CREATE POLICY "Users can view all documents" ON documents
---   FOR SELECT TO authenticated
---   USING (true);
-
--- CREATE POLICY "Users can insert documents" ON documents
---   FOR INSERT TO authenticated
---   WITH CHECK (true);
-
--- CREATE POLICY "Users can update documents" ON documents
---   FOR UPDATE TO authenticated
---   USING (true);
-
--- ================================================
--- Utility Functions
--- ================================================
-
--- Function to get document statistics
-CREATE OR REPLACE FUNCTION get_document_stats(doc_name TEXT)
-RETURNS TABLE (
-  document_name TEXT,
-  update_count BIGINT,
-  latest_update TIMESTAMPTZ,
-  state_size BIGINT
-) AS $$
-BEGIN
-  RETURN QUERY
-  SELECT
-    d.name,
-    COUNT(u.id),
-    MAX(u.created_at),
-    LENGTH(d.yjs_state)
-  FROM documents d
-  LEFT JOIN document_updates u ON d.name = u.document_name
-  WHERE d.name = doc_name
-  GROUP BY d.name, d.yjs_state;
-END;
-$$ LANGUAGE plpgsql;
-
--- Function to clean old updates (keep last N days)
-CREATE OR REPLACE FUNCTION cleanup_old_updates(days_to_keep INTEGER DEFAULT 30)
-RETURNS INTEGER AS $$
-DECLARE
-  deleted_count INTEGER;
-BEGIN
-  DELETE FROM document_updates
-  WHERE created_at < NOW() - (days_to_keep || ' days')::INTERVAL;
-  
-  GET DIAGNOSTICS deleted_count = ROW_COUNT;
-  RETURN deleted_count;
-END;
-$$ LANGUAGE plpgsql;
-
--- ================================================
--- Sample Data (Optional - for testing)
--- ================================================
-
--- Uncomment to insert sample document
-/*
-INSERT INTO documents (name, metadata) VALUES
-  ('test-doc', '{"title": "Test Document", "description": "A sample collaborative document"}')
-ON CONFLICT (name) DO NOTHING;
-*/
-
--- ================================================
--- Verification Queries
--- ================================================
-
--- Check if all tables exist
-SELECT 
-  'documents' as table_name, 
-  EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'documents') as exists
-UNION ALL
-SELECT 
-  'document_updates', 
-  EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'document_updates')
-UNION ALL
-SELECT 
-  'document_snapshots', 
-  EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'document_snapshots');
-
--- Count records in each table
-SELECT 'documents' as table_name, COUNT(*) as count FROM documents
-UNION ALL
-SELECT 'document_updates', COUNT(*) FROM document_updates
-UNION ALL
-SELECT 'document_snapshots', COUNT(*) FROM document_snapshots;
 
