@@ -12,7 +12,10 @@ export function setupProviders(
   ydoc: Y.Doc,
 ) {
   // Use the entityId as the unique name for all providers
-  const roomName = entityId
+  let roomName = entityId
+  if (WEBRTC_PASSWORD) {
+    roomName = `${entityId}/${WEBRTC_PASSWORD}`
+  }
 
   // Initialize the Yjs document structure based on the entity type
   const config = entityConfigs[entityType]
@@ -25,6 +28,7 @@ export function setupProviders(
   
   indexeddbProvider.on('synced', () => {
     console.log('✅ IndexedDB loaded')
+    docState.connection.indexeddb = 'synced'
   })
   
   // 2. Hocuspocus (WebSocket, authoritative server)
@@ -47,6 +51,7 @@ export function setupProviders(
     
     onStatus: ({ status }) => {
       console.log('📡 Connection status:', status)
+      docState.connection.websocket = status
     },
     
     onAuthenticationFailed: ({ reason }) => {
@@ -151,6 +156,12 @@ export function setupProviders(
     const bcCount = bcConns?.size || 0
     const awarenessStates = Array.from(hocuspocusProvider.awareness.getStates().keys())
     
+    if (p2pCount > 0) {
+      docState.connection.webrtc = 'connected'
+    } else {
+      docState.connection.webrtc = 'connecting'
+    }
+
     console.log(`🔗 WebRTC connection state:`, {
       p2pConnections: p2pCount,
       broadcastConnections: bcCount,
@@ -191,6 +202,9 @@ export function setupProviders(
   // Additional debugging events
   webrtcProvider.on('status', ({ connected }: any) => {
     console.log(`📡 WebRTC provider status: ${connected ? 'connected' : 'disconnected'}`)
+    if (!connected) {
+      docState.connection.webrtc = 'disconnected'
+    }
   })
   
   // Access internal WebRTC peer connections for detailed debugging

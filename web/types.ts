@@ -42,6 +42,11 @@ export interface DocumentState {
   status: 'disconnected' | 'connecting' | 'connected'
   peers: number
   selectedIds: string[]
+  connection: {
+    indexeddb: 'syncing' | 'synced'
+    websocket: 'disconnected' | 'connecting' | 'connected'
+    webrtc: 'disconnected' | 'connecting' | 'connected'
+  }
 }
 
 export interface CursorState {

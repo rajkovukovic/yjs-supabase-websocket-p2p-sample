@@ -21,6 +21,11 @@ export const docState = proxy<DocumentState>({
   status: 'disconnected',
   peers: 0,
   selectedIds: [],
+  connection: {
+    indexeddb: 'syncing',
+    websocket: 'disconnected',
+    webrtc: 'disconnected',
+  },
 })
 
 // Sync Yjs to Valtio

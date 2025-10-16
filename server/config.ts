@@ -35,6 +35,7 @@ export const config = {
   },
   yWebrtcSignaling: {
     port: parseInt(process.env.Y_WEBRTC_SIGNALING_PORT || '4445'),
+    password: process.env.Y_WEBRTC_PASSWORD || null,
   },
   cors: {
     origin: process.env.CORS_ORIGIN || '*',

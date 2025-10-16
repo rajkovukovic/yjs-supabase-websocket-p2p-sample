@@ -15,6 +15,7 @@ import { config } from './config.js'
 
 const PORT = config.yWebrtcSignaling?.port || 4445
 const VERBOSE = process.env.VERBOSE === 'true'
+const WEBRTC_PASSWORD = config.yWebrtcSignaling?.password || null
 
 // Room management: Map<roomName, Set<WebSocket>>
 const rooms = new Map<string, Set<WebSocket>>()
@@ -93,14 +94,24 @@ function setupConnection(socket: WebSocket) {
           const topics = message.topics || []
           topics.forEach((roomName: string) => {
             if (typeof roomName === 'string') {
+              let Rname = roomName;
+              if (WEBRTC_PASSWORD) {
+                const [name, password] = roomName.split('/')
+                Rname = name
+                if (password !== WEBRTC_PASSWORD) {
+                  console.warn(`[Y-WebRTC] Unauthorized connection to room ${Rname}: invalid password`)
+                  return
+                }
+              }
+
               if (VERBOSE) {
-                console.log(`[Y-WebRTC] Client subscribing to room: ${roomName}`)
+                console.log(`[Y-WebRTC] Client subscribing to room: ${Rname}`)
               }
               
               // Add socket to room
-              const room = getRoom(roomName)
+              const room = getRoom(Rname)
               room.add(socket)
-              subscribedRooms.add(roomName)
+              subscribedRooms.add(Rname)
             }
           })
           break

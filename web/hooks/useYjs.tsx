@@ -63,13 +63,15 @@ export function YjsProvider({
     awareness.on('change', updatePeerCount)
     updatePeerCount() // Initial count
 
-    // Also track WebRTC peers if enabled (optional)
-    if (providers.webrtcProvider) {
-      providers.webrtcProvider.on('peers', ({ webrtcPeers }: any) => {
-        // Use WebRTC peer count if available (more accurate for P2P)
-        docState.peers = webrtcPeers.length
-      })
-    }
+    // The Hocuspocus awareness is the source of truth for connected users.
+    // WebRTC peer count reflects only direct P2P connections and can be a subset.
+    // Relying on awareness alone provides a more consistent user count.
+    // if (providers.webrtcProvider) {
+    //   providers.webrtcProvider.on('peers', ({ webrtcPeers }: any) => {
+    //     // Use WebRTC peer count if available (more accurate for P2P)
+    //     docState.peers = webrtcPeers.length
+    //   })
+    // }
 
     return () => {
       clearTimeout(timeout)
