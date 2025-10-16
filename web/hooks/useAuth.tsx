@@ -13,11 +13,23 @@ export const useAuth = () => {
     // Get initial session
     const initializeAuth = async () => {
       try {
-        const { data: { session: initialSession } } = await supabase.auth.getSession()
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession()
+
+        if (error) {
+          throw error
+        }
+
         setSession(initialSession)
         setUser(initialSession?.user ?? null)
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching session:', error)
+        // If token is expired, sign out and redirect
+        if (error.message.includes('Token expired') || error.message.includes('Invalid Refresh Token')) {
+          await supabase.auth.signOut()
+          setUser(null)
+          setSession(null)
+          window.location.href = '/' // Redirect to login
+        }
       } finally {
         setLoading(false)
       }

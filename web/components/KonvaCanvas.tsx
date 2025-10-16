@@ -127,20 +127,21 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
     transformerRef.current.getLayer()?.batchDraw()
   }, [snap.selectedIds])
 
-  useEffect(() => {
-    const handleSelectAll = (e: KeyboardEvent) => {
+  const handleSelectAll = useCallback((e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
         e.preventDefault()
         const allDrawableIds = (snap.entity.drawables || []).map((d) => d.id)
         actions.setSelectedIds(allDrawableIds)
       }
-    }
+    },[snap.entity.drawables])
+
+  useEffect(() => {
 
     window.addEventListener('keydown', handleSelectAll)
     return () => {
       window.removeEventListener('keydown', handleSelectAll)
     }
-  }, [snap.entity.drawables])
+  }, [handleSelectAll])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -347,7 +348,15 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
           height: drawable.height,
         })
       }
-      // Add intersection logic for other shapes like ellipses if needed
+      if (drawable.type === 'ellipse') {
+        // A simple bounding box intersection for ellipses
+        return Konva.Util.haveIntersection(box, {
+          x: drawable.x - drawable.radiusX,
+          y: drawable.y - drawable.radiusY,
+          width: drawable.radiusX * 2,
+          height: drawable.radiusY * 2,
+        })
+      }
       return false
     })
     actions.setSelectedIds(selected.map((drawable) => drawable.id))

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSnapshot } from 'valtio'
-import { documentState } from '@/store/document'
+import { docState } from '@/store/document'
 import { useAwareness, useYDoc } from '@/hooks/useYjs'
 import { useAppPresence } from '@/hooks/useAppPresence'
 import { useAuth } from '@/hooks/useAuth'
@@ -26,7 +26,7 @@ export function DocumentStatusToolbar({
   documentName,
 }: DocumentStatusToolbarProps) {
   const router = useRouter()
-  const snap = useSnapshot(documentState)
+  const snap = useSnapshot(docState)
   const awareness = useAwareness()
   const ydoc = useYDoc()
   const [presenceUsers, setPresenceUsers] = useState<PresenceUser[]>([])
