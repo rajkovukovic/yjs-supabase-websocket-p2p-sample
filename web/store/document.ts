@@ -50,8 +50,13 @@ export function syncYjsToValtio(ydoc: Y.Doc, entityType: EntityType) {
 
   topLevelKeys.forEach((key) => {
     const ytype = ydoc.get(key)
-    ytype.observe(observer)
-    unsubs.push(() => ytype.unobserve(observer))
+    if (ytype instanceof Y.Array || ytype instanceof Y.Map) {
+      ytype.observeDeep(observer)
+      unsubs.push(() => ytype.unobserveDeep(observer))
+    } else {
+      ytype.observe(observer)
+      unsubs.push(() => ytype.unobserve(observer))
+    }
   })
 
   observer() // initial sync
