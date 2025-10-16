@@ -19,11 +19,13 @@ import {
 } from 'lucide-react'
 
 interface DocumentStatusToolbarProps {
-  documentName: string
+  documentId: string
+  documentTitle: string
 }
 
 export function DocumentStatusToolbar({
-  documentName,
+  documentId,
+  documentTitle,
 }: DocumentStatusToolbarProps) {
   const router = useRouter()
   const snap = useSnapshot(docState)
@@ -41,13 +43,13 @@ export function DocumentStatusToolbar({
 
   // Set current document for app-level presence tracking
   useEffect(() => {
-    if (documentName) {
-      setCurrentDocumentId(documentName)
+    if (documentId) {
+      setCurrentDocumentId(documentId)
     }
     return () => {
       setCurrentDocumentId(null)
     }
-  }, [documentName, setCurrentDocumentId])
+  }, [documentId, setCurrentDocumentId])
 
   // Track presence users from awareness
   useEffect(() => {
@@ -226,9 +228,9 @@ export function DocumentStatusToolbar({
         <div className="flex items-center gap-2">
           <span
             className="truncate max-w-[150px] text-sm font-semibold text-gray-800"
-            title={documentName}
+            title={documentTitle}
           >
-            {documentName}
+            {documentTitle}
           </span>
 
           {documentPresenceUsers.length > 0 && (

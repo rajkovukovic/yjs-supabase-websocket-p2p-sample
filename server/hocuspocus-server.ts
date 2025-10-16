@@ -99,8 +99,17 @@ const server = Server.configure({
   /**
    * Called when a connection is established
    */
-  async onConnect({ documentName }) {
+  async onConnect({ documentName, requestParameters, context }) {
     console.log(`[Hocuspocus] Client connected to ${documentName}`)
+    
+    // Pass entityType to other extensions via context
+    const entityType = requestParameters.get('entityType')
+    if (typeof entityType === 'string') {
+      context.entityType = entityType
+    } else {
+      console.error(`[Hocuspocus] Connection rejected: entityType is missing or invalid.`)
+      throw new Error('entityType is required')
+    }
   },
   
   /**

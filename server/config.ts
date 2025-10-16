@@ -40,9 +40,6 @@ export const config = {
     origin: process.env.CORS_ORIGIN || '*',
   },
   nodeEnv: process.env.NODE_ENV || 'development',
-  tables: {
-    documentUpdates: process.env.TABLE_DOCUMENT_UPDATES || 'document_updates',
-  },
 }
 
 console.log('✓ Environment variables loaded successfully')

@@ -11,7 +11,8 @@ export function setupProviders(
   entityId: string,
   ydoc: Y.Doc,
 ) {
-  const docPath = `${entityType}:${entityId}`
+  // Use the entityId as the unique name for all providers
+  const roomName = entityId
 
   // Initialize the Yjs document structure based on the entity type
   const config = entityConfigs[entityType]
@@ -20,7 +21,7 @@ export function setupProviders(
   }
 
   // 1. IndexedDB (local persistence)
-  const indexeddbProvider = new IndexeddbPersistence(docPath, ydoc)
+  const indexeddbProvider = new IndexeddbPersistence(roomName, ydoc)
   
   indexeddbProvider.on('synced', () => {
     console.log('✅ IndexedDB loaded')
@@ -29,8 +30,11 @@ export function setupProviders(
   // 2. Hocuspocus (WebSocket, authoritative server)
   const hocuspocusProvider = new HocuspocusProvider({
     url: HOCUSPOCUS_URL,
-    name: docPath,
+    name: roomName,
     document: ydoc,
+    parameters: {
+      entityType: entityType,
+    },
     
     // MVP: Provide a dummy token to satisfy HocuspocusProvider v2.15.3 client-side validation
     // The server's onAuthenticate hook accepts all connections without checking the token
@@ -124,7 +128,7 @@ export function setupProviders(
     webrtcOptions.password = WEBRTC_PASSWORD
   }
   
-  const webrtcProvider = new WebrtcProvider(docPath, ydoc, webrtcOptions)
+  const webrtcProvider = new WebrtcProvider(roomName, ydoc, webrtcOptions)
   
   if (Y_WEBRTC_SIGNALING_URL) {
     console.log('📡 WebRTC provider configured with signaling server:', Y_WEBRTC_SIGNALING_URL)

@@ -1,30 +1,34 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { YjsProvider } from '@/hooks/useYjs'
 import KonvaCanvas from '@/components/KonvaCanvas'
 import { Cursors } from '@/components/Cursors'
 import { AuthGuard } from '@/components/AuthGuard'
-import { useAppPresence } from '@/hooks/useAppPresence'
+import { supabase } from '@/lib/supabase'
 
-function DocumentContent({ documentName }: { documentName: string }) {
-  const { setCurrentDocumentId } = useAppPresence()
+function DocumentContent({ documentId }: { documentId: string }) {
+  const [title, setTitle] = useState(documentId)
 
   useEffect(() => {
-    // Broadcast that we're viewing this document
-    setCurrentDocumentId(documentName)
-
-    // Clean up when leaving the document
-    return () => {
-      setCurrentDocumentId(null)
+    const fetchTitle = async () => {
+      const { data, error } = await supabase
+        .from('yjs_entities')
+        .select('metadata')
+        .eq('id', documentId)
+        .single()
+      
+      if (data?.metadata?.title) {
+        setTitle(data.metadata.title)
+      }
     }
-  }, [documentName, setCurrentDocumentId])
+    fetchTitle()
+  }, [documentId])
 
   return (
     <div className="h-screen flex flex-col">
       <div className="flex-1 relative">
-        <KonvaCanvas documentName={documentName} />
-        {/* Initialize cursors hook (manages awareness state) */}
+        <KonvaCanvas documentId={documentId} documentTitle={title} />
         <Cursors />
       </div>
     </div>
@@ -37,7 +41,7 @@ export default function DocumentPage({ params }: { params: { id: string } }) {
   return (
     <AuthGuard>
       <YjsProvider entityType="document" entityId={id}>
-        <DocumentContent documentName={id} />
+        <DocumentContent documentId={id} />
       </YjsProvider>
     </AuthGuard>
   )

@@ -98,7 +98,7 @@ const Grid = ({
   return <Group>{lines}</Group>
 }
 
-const KonvaCanvas = ({ documentName }: { documentName: string }) => {
+const KonvaCanvas = ({ documentId, documentTitle }: { documentId: string, documentTitle: string }) => {
   const snap = useSnapshot(docState)
   const ydoc = useYDoc()
   const awareness = useAwareness()
@@ -219,7 +219,7 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
   }, [snap.selectedIds, ydoc, isCreateShapeMode])
 
   const [stage, setStage] = useState(() => {
-    return loadTransformState(documentName) || {
+    return loadTransformState(documentId) || {
       scale: 1,
       x: 0,
       y: 0,
@@ -227,8 +227,8 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
   })
 
   useEffect(() => {
-    saveTransformState(documentName, stage)
-  }, [stage, documentName])
+    saveTransformState(documentId, stage)
+  }, [stage, documentId])
 
   const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault()
@@ -499,7 +499,7 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
 
   return (
     <div className="relative w-full h-full">
-      <DocumentStatusToolbar documentName={documentName} />
+      <DocumentStatusToolbar documentId={documentId} documentTitle={documentTitle} />
       <Stage
         ref={stageRef}
         width={window.innerWidth}
