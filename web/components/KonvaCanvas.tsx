@@ -3,13 +3,14 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { Stage, Layer, Rect, Transformer, Line, Group } from 'react-konva'
 import { useSnapshot } from 'valtio'
-import { documentState, actions } from '../store/document'
+import { docState, actions } from '../store/document'
 import { useYDoc, useAwareness } from '../hooks/useYjs'
 import Konva from 'konva'
-import Rectangle from './Rectangle'
+import Drawable from './Drawable'
 import { CanvasCursors } from './Cursors'
 import { DocumentStatusToolbar } from './DocumentStatusToolbar'
 import { ZoomControlsAndStatus } from './ZoomControlsAndStatus'
+import { Drawable as DrawableType } from '@/lib/schemas'
 
 type DragContext = {
   initialPositions: Map<string, { x: number; y: number }>
@@ -97,15 +98,15 @@ const Grid = ({
   return <Group>{lines}</Group>
 }
 
-const KonvaCanvas = ({ documentName }: { documentName: string }) => {
-  const snap = useSnapshot(documentState)
+const KonvaCanvas = ({ documentId, documentTitle }: { documentId: string, documentTitle: string }) => {
+  const snap = useSnapshot(docState)
   const ydoc = useYDoc()
   const awareness = useAwareness()
   const selectionRectRef = useRef<Konva.Rect>(null)
   const selectionBox = useRef({ x1: 0, y1: 0, x2: 0, y2: 0 })
   const [selecting, setSelecting] = useState(false)
-  const [isCreateRectangleMode, setIsCreateRectangleMode] = useState(false)
-  const [newRectangle, setNewRectangle] = useState<any[]>([])
+  const [isCreateShapeMode, setIsCreateShapeMode] = useState(false)
+  const [newShape, setNewShape] = useState<any[]>([])
   const [isSpacePressed, setIsSpacePressed] = useState(false)
   const stageRef = useRef<Konva.Stage>(null)
   const transformerRef = useRef<Konva.Transformer>(null)
@@ -118,28 +119,29 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
     const stage = stageRef.current
     if (!stage || !transformerRef.current) return
 
-    const selectedNodes = snap.selectedRectangleIds
+    const selectedNodes = snap.selectedIds
       .map((id) => stage.findOne('#' + id))
       .filter((node): node is Konva.Node => !!node)
 
     transformerRef.current.nodes(selectedNodes)
     transformerRef.current.getLayer()?.batchDraw()
-  }, [snap.selectedRectangleIds])
+  }, [snap.selectedIds])
 
-  useEffect(() => {
-    const handleSelectAll = (e: KeyboardEvent) => {
+  const handleSelectAll = useCallback((e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
         e.preventDefault()
-        const allRectangleIds = snap.rectangles.map((r) => r.id)
-        actions.setSelectedRectangle(allRectangleIds)
+        const allDrawableIds = (snap.entity.drawables || []).map((d) => d.id)
+        actions.setSelectedIds(allDrawableIds)
       }
-    }
+    },[snap.entity.drawables])
+
+  useEffect(() => {
 
     window.addEventListener('keydown', handleSelectAll)
     return () => {
       window.removeEventListener('keydown', handleSelectAll)
     }
-  }, [snap.rectangles])
+  }, [handleSelectAll])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -167,13 +169,13 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
     if (stage) {
       if (isSpacePressed) {
         stage.container().style.cursor = 'grab'
-      } else if (isCreateRectangleMode) {
+      } else if (isCreateShapeMode) {
         stage.container().style.cursor = 'crosshair'
       } else {
         stage.container().style.cursor = 'default'
       }
     }
-  }, [isSpacePressed, isCreateRectangleMode])
+  }, [isSpacePressed, isCreateShapeMode])
 
   useEffect(() => {
     if (!awareness) return
@@ -200,12 +202,12 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setIsCreateRectangleMode(false)
-        setNewRectangle([])
+        setIsCreateShapeMode(false)
+        setNewShape([])
       }
       if (e.key === 'Backspace' || e.key === 'Delete') {
-        if (snap.selectedRectangleIds.length > 0) {
-          actions.deleteRectangles(ydoc, [...snap.selectedRectangleIds])
+        if (snap.selectedIds.length > 0) {
+          actions.deleteDrawables(ydoc, [...snap.selectedIds])
         }
       }
     }
@@ -214,10 +216,10 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [snap.selectedRectangleIds, ydoc, isCreateRectangleMode])
+  }, [snap.selectedIds, ydoc, isCreateShapeMode])
 
   const [stage, setStage] = useState(() => {
-    return loadTransformState(documentName) || {
+    return loadTransformState(documentId) || {
       scale: 1,
       x: 0,
       y: 0,
@@ -225,8 +227,8 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
   })
 
   useEffect(() => {
-    saveTransformState(documentName, stage)
-  }, [stage, documentName])
+    saveTransformState(documentId, stage)
+  }, [stage, documentId])
 
   const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault()
@@ -267,12 +269,12 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     if (isSpacePressed) return
 
-    if (isCreateRectangleMode) {
+    if (isCreateShapeMode) {
       const stage = e.target.getStage()
       if (!stage) return
       const pos = stage.getRelativePointerPosition()
       if (!pos) return
-      setNewRectangle([{ x: pos.x, y: pos.y, width: 0, height: 0, id: 'new' }])
+      setNewShape([{ x: pos.x, y: pos.y, width: 0, height: 0, id: 'new' }])
       return
     }
 
@@ -281,7 +283,7 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
     }
     e.evt.preventDefault()
     setSelecting(true)
-    actions.setSelectedRectangle([])
+    actions.setSelectedIds([])
     const stage = e.target.getStage()
     if (!stage) return
     const pos = stage.getRelativePointerPosition()
@@ -299,13 +301,13 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
       awareness.setLocalStateField('cursor', { x: pos.x, y: pos.y })
     }
 
-    if (isCreateRectangleMode) {
-      if (newRectangle.length === 0) return
+    if (isCreateShapeMode) {
+      if (newShape.length === 0) return
       if (!pos) return
-      const rect = newRectangle[0]
-      rect.width = pos.x - rect.x
-      rect.height = pos.y - rect.y
-      setNewRectangle([rect])
+      const shape = newShape[0]
+      shape.width = pos.x - shape.x
+      shape.height = pos.y - shape.y
+      setNewShape([shape])
       return
     }
 
@@ -337,15 +339,27 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
       height: y2 - y1,
     }
 
-    const selected = snap.rectangles.filter((rect) =>
-      Konva.Util.haveIntersection(box, {
-        x: rect.x,
-        y: rect.y,
-        width: rect.width,
-        height: rect.height,
-      }),
-    )
-    actions.setSelectedRectangle(selected.map((rect) => rect.id))
+    const selected = (snap.entity.drawables || []).filter((drawable) => {
+      if (drawable.type === 'rectangle') {
+        return Konva.Util.haveIntersection(box, {
+          x: drawable.x,
+          y: drawable.y,
+          width: drawable.width,
+          height: drawable.height,
+        })
+      }
+      if (drawable.type === 'ellipse') {
+        // A simple bounding box intersection for ellipses
+        return Konva.Util.haveIntersection(box, {
+          x: drawable.x - drawable.radiusX,
+          y: drawable.y - drawable.radiusY,
+          width: drawable.radiusX * 2,
+          height: drawable.radiusY * 2,
+        })
+      }
+      return false
+    })
+    actions.setSelectedIds(selected.map((drawable) => drawable.id))
   }
 
   const handleTouchMove = (e: Konva.KonvaEventObject<TouchEvent>) => {
@@ -398,22 +412,35 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
   }
 
   const handleMouseUp = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
-    if (isCreateRectangleMode) {
-      if (newRectangle.length > 0) {
-        const rect = newRectangle[0]
-        if (Math.abs(rect.width) > 5 && Math.abs(rect.height) > 5) {
-          actions.addRectangle(ydoc, {
-            id: crypto.randomUUID(),
-            x: rect.x,
-            y: rect.y,
-            width: rect.width,
-            height: rect.height,
-            fill: `hsl(${Math.random() * 360}, 70%, 60%)`,
-            stroke: '#000',
-            strokeWidth: 2,
-          })
+    if (isCreateShapeMode) {
+      if (newShape.length > 0) {
+        const shape = newShape[0]
+        if (Math.abs(shape.width) > 5 && Math.abs(shape.height) > 5) {
+          // simple logic to decide shape, can be improved
+          const type = Math.random() > 0.5 ? 'rectangle' : 'ellipse'
+          const newDrawable: DrawableType =
+            type === 'rectangle'
+              ? {
+                  id: crypto.randomUUID(),
+                  type: 'rectangle',
+                  x: shape.x,
+                  y: shape.y,
+                  width: shape.width,
+                  height: shape.height,
+                  fill: `hsl(${Math.random() * 360}, 70%, 60%)`,
+                }
+              : {
+                  id: crypto.randomUUID(),
+                  type: 'ellipse',
+                  x: shape.x + shape.width / 2,
+                  y: shape.y + shape.height / 2,
+                  radiusX: Math.abs(shape.width) / 2,
+                  radiusY: Math.abs(shape.height) / 2,
+                  fill: `hsl(${Math.random() * 360}, 70%, 60%)`,
+                }
+          actions.addDrawable(ydoc, newDrawable)
         }
-        setNewRectangle([])
+        setNewShape([])
       }
       return
     }
@@ -472,7 +499,7 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
 
   return (
     <div className="relative w-full h-full">
-      <DocumentStatusToolbar documentName={documentName} />
+      <DocumentStatusToolbar documentId={documentId} documentTitle={documentTitle} />
       <Stage
         ref={stageRef}
         width={window.innerWidth}
@@ -500,44 +527,44 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
             x={stage.x}
             y={stage.y}
           />
-          {snap.rectangles.map((rect) => (
-            <Rectangle
-              key={rect.id}
-              {...rect}
-              isSelected={snap.selectedRectangleIds.includes(rect.id)}
+          {(snap.entity.drawables || []).map((drawable) => (
+            <Drawable
+              key={drawable.id}
+              shapeProps={drawable}
+              isSelected={snap.selectedIds.includes(drawable.id)}
               isSpacePressed={isSpacePressed}
               onSelect={(e) => {
                 if (e.evt.shiftKey) {
-                  if (snap.selectedRectangleIds.includes(rect.id)) {
-                    actions.setSelectedRectangle(
-                      snap.selectedRectangleIds.filter((id) => id !== rect.id),
+                  if (snap.selectedIds.includes(drawable.id)) {
+                    actions.setSelectedIds(
+                      snap.selectedIds.filter((id) => id !== drawable.id),
                     )
                   } else {
-                    actions.setSelectedRectangle([
-                      ...snap.selectedRectangleIds,
-                      rect.id,
+                    actions.setSelectedIds([
+                      ...snap.selectedIds,
+                      drawable.id,
                     ])
                   }
                 } else {
-                  actions.setSelectedRectangle(
-                    snap.selectedRectangleIds.includes(rect.id) ? [] : [rect.id],
+                  actions.setSelectedIds(
+                    snap.selectedIds.includes(drawable.id) ? [] : [drawable.id],
                   )
                 }
               }}
               onDragStart={(e) => {
                 if (
-                  snap.selectedRectangleIds.length > 1 &&
-                  snap.selectedRectangleIds.includes(rect.id)
+                  snap.selectedIds.length > 1 &&
+                  snap.selectedIds.includes(drawable.id)
                 ) {
                   const stage = e.target.getStage()
                   const pointerPos = stage?.getPointerPosition()
                   if (!pointerPos) return
 
                   const initialPositions = new Map<string, { x: number; y: number }>()
-                  snap.selectedRectangleIds.forEach((id) => {
-                    const r = snap.rectangles.find((r) => r.id === id)
-                    if (r) {
-                      initialPositions.set(id, { x: r.x, y: r.y })
+                  snap.selectedIds.forEach((id) => {
+                    const d = (snap.entity.drawables || []).find((d) => d.id === id)
+                    if (d) {
+                      initialPositions.set(id, { x: d.x, y: d.y })
                     }
                   })
                   setDragContext({
@@ -548,16 +575,16 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
               }}
               onDragMove={(e) => {
                 if (dragContext) {
-                  const draggedRect = e.target
-                  const draggedRectId = draggedRect.id()
-                  const initialPos = dragContext.initialPositions.get(draggedRectId)
+                  const draggedShape = e.target
+                  const draggedShapeId = draggedShape.id()
+                  const initialPos = dragContext.initialPositions.get(draggedShapeId)
                   if (!initialPos) return
 
-                  const dx = draggedRect.x() - initialPos.x
-                  const dy = draggedRect.y() - initialPos.y
+                  const dx = draggedShape.x() - initialPos.x
+                  const dy = draggedShape.y() - initialPos.y
 
-                  const updates = snap.selectedRectangleIds
-                    .filter((id) => id !== draggedRectId)
+                  const updates = snap.selectedIds
+                    .filter((id) => id !== draggedShapeId)
                     .map((id) => {
                       const startPos = dragContext.initialPositions.get(id)
                       if (startPos) {
@@ -572,13 +599,13 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
                     .filter((u): u is { id: string; x: number; y: number } => u !== null)
 
                   if (updates.length > 0) {
-                    actions.updateRectangles(ydoc, updates)
+                    actions.updateDrawables(ydoc, updates)
                   }
                 }
               }}
               onChange={(newAttrs) => {
                 if (dragContext) {
-                  const { id: draggedId, x: finalX, y: finalY } = newAttrs
+                  const { id: draggedId, x: finalX, y: finalY } = newAttrs as any
                   const initialPos = dragContext.initialPositions.get(draggedId)
                   if (!initialPos) {
                     setDragContext(null)
@@ -588,7 +615,7 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
                   const dx = finalX - initialPos.x
                   const dy = finalY - initialPos.y
 
-                  const finalUpdates = snap.selectedRectangleIds
+                  const finalUpdates = snap.selectedIds
                     .map((id) => {
                       const startPos = dragContext.initialPositions.get(id)
                       if (startPos) {
@@ -602,22 +629,22 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
                     })
                     .filter((u): u is { id: string; x: number; y: number } => u !== null)
 
-                  actions.updateRectangles(ydoc, finalUpdates)
+                  actions.updateDrawables(ydoc, finalUpdates)
                   setDragContext(null)
                 } else {
-                  actions.updateRectangle(ydoc, newAttrs.id, newAttrs)
+                  actions.updateDrawable(ydoc, (newAttrs as any).id, newAttrs)
                 }
               }}
             />
           ))}
-          {newRectangle.map((rect) => {
+          {newShape.map((shape) => {
             return (
               <Rect
-                key={rect.id}
-                x={rect.x}
-                y={rect.y}
-                width={rect.width}
-                height={rect.height}
+                key={shape.id}
+                x={shape.x}
+                y={shape.y}
+                width={shape.width}
+                height={shape.height}
                 fill="rgba(59, 130, 246, 0.2)"
                 stroke="#3b82f6"
                 strokeWidth={2 / stage.scale}
@@ -638,16 +665,28 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
 
                 node.scaleX(1)
                 node.scaleY(1)
+                const drawable = (snap.entity.drawables || []).find((d) => d.id === node.id())
 
-                return {
-                  id: node.id(),
-                  x: node.x(),
-                  y: node.y(),
-                  width: Math.max(5, node.width() * scaleX),
-                  height: Math.max(5, node.height() * scaleY),
+                if (drawable?.type === 'rectangle') {
+                  return {
+                    id: node.id(),
+                    x: node.x(),
+                    y: node.y(),
+                    width: Math.max(5, node.width() * scaleX),
+                    height: Math.max(5, node.height() * scaleY),
+                  }
+                } else if (drawable?.type === 'ellipse') {
+                  return {
+                    id: node.id(),
+                    x: node.x(),
+                    y: node.y(),
+                    radiusX: Math.max(5, (node as Konva.Ellipse).radiusX() * scaleX),
+                    radiusY: Math.max(5, (node as Konva.Ellipse).radiusY() * scaleY),
+                  }
                 }
-              })
-              actions.updateRectangles(ydoc, updates)
+                return null
+              }).filter((u): u is Exclude<typeof u, null> => u !== null)
+              actions.updateDrawables(ydoc, updates)
             }}
           />
         </Layer>
@@ -669,8 +708,8 @@ const KonvaCanvas = ({ documentName }: { documentName: string }) => {
         zoomIn={() => zoom('in')}
         zoomOut={() => zoom('out')}
         resetTransform={resetTransform}
-        isCreateRectangleMode={isCreateRectangleMode}
-        setIsCreateRectangleMode={setIsCreateRectangleMode}
+        isCreateRectangleMode={isCreateShapeMode}
+        setIsCreateRectangleMode={setIsCreateShapeMode}
       />
     </div>
   )

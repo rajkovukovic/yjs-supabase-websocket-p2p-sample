@@ -35,16 +35,12 @@ export const config = {
   },
   yWebrtcSignaling: {
     port: parseInt(process.env.Y_WEBRTC_SIGNALING_PORT || '4445'),
+    password: process.env.Y_WEBRTC_PASSWORD || null,
   },
   cors: {
     origin: process.env.CORS_ORIGIN || '*',
   },
   nodeEnv: process.env.NODE_ENV || 'development',
-  tables: {
-    documents: process.env.TABLE_DOCUMENTS || 'documents',
-    documentUpdates: process.env.TABLE_DOCUMENT_UPDATES || 'document_updates',
-    documentSnapshots: process.env.TABLE_DOCUMENT_SNAPSHOTS || 'document_snapshots',
-  },
 }
 
 console.log('✓ Environment variables loaded successfully')

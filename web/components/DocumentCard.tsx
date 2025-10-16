@@ -3,8 +3,11 @@ import { Clock } from 'lucide-react'
 
 export interface Document {
   id: string
-  name: string
-  metadata: Record<string, any>
+  type: string
+  metadata: {
+    title?: string
+    [key: string]: any
+  }
   created_at: string
   updated_at: string
 }
@@ -13,7 +16,7 @@ interface DocumentCardProps {
   document: Document
   index: number
   onlineUsers: any[]
-  onDocumentClick: (name: string) => void
+  onDocumentClick: (id: string) => void
   onDeleteClick: (e: React.MouseEvent, docId: string) => void
 }
 
@@ -35,10 +38,12 @@ export const DocumentCard = ({
   onDocumentClick,
   onDeleteClick
 }: DocumentCardProps) => {
+  const title = document.metadata?.title || document.id
+
   return (
     <div className="relative group">
       <div
-        onClick={() => onDocumentClick(document.name)}
+        onClick={() => onDocumentClick(document.id)}
         className="w-full text-left py-4 transition-colors cursor-pointer hover:bg-gray-50"
       >
         <div className="flex items-center justify-between">
@@ -50,10 +55,10 @@ export const DocumentCard = ({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
-                <h3 className="text-base font-medium text-gray-900 truncate">
-                  {document.name}
+                <h3 className="text-base font-medium text-gray-900 truncate" title={title}>
+                  {title}
                 </h3>
-                 <DocumentPresence documentName={document.name} onlineUsers={onlineUsers} showStatusText={false} />
+                 <DocumentPresence documentName={document.id} onlineUsers={onlineUsers} showStatusText={false} />
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 pl-[52px]">

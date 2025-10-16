@@ -1,3 +1,6 @@
+import Konva from 'konva'
+import { Drawable, Comment } from './lib/schemas'
+
 export interface Rectangle {
   id: string
   x: number
@@ -9,6 +12,8 @@ export interface Rectangle {
   strokeWidth?: number
 }
 
+export { Drawable, Comment }
+
 export interface ViewBox {
   x: number
   y: number
@@ -16,12 +21,32 @@ export interface ViewBox {
   height: number
 }
 
+export interface DrawableProps<T extends Drawable> {
+  shapeProps: T
+  isSelected: boolean
+  onSelect: (e: Konva.KonvaEventObject<MouseEvent>) => void
+  onChange: (newAttrs: Partial<T>) => void
+  isSpacePressed: boolean
+  onDragStart?: (e: Konva.KonvaEventObject<DragEvent>) => void
+  onDragMove?: (e: Konva.KonvaEventObject<DragEvent>) => void
+}
+
 export interface DocumentState {
-  rectangles: Rectangle[]
+  entity: {
+    name?: string
+    drawables?: Drawable[]
+    comments?: Comment[]
+    [key: string]: any
+  }
   synced: boolean
   status: 'disconnected' | 'connecting' | 'connected'
   peers: number
-  selectedRectangleIds: string[]
+  selectedIds: string[]
+  connection: {
+    indexeddb: 'syncing' | 'synced'
+    websocket: 'disconnected' | 'connecting' | 'connected'
+    webrtc: 'disconnected' | 'connecting' | 'connected'
+  }
 }
 
 export interface CursorState {

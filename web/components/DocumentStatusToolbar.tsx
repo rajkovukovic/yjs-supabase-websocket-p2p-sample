@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSnapshot } from 'valtio'
-import { documentState } from '@/store/document'
+import { docState } from '@/store/document'
 import { useAwareness, useYDoc } from '@/hooks/useYjs'
 import { useAppPresence } from '@/hooks/useAppPresence'
 import { useAuth } from '@/hooks/useAuth'
@@ -19,14 +19,16 @@ import {
 } from 'lucide-react'
 
 interface DocumentStatusToolbarProps {
-  documentName: string
+  documentId: string
+  documentTitle: string
 }
 
 export function DocumentStatusToolbar({
-  documentName,
+  documentId,
+  documentTitle,
 }: DocumentStatusToolbarProps) {
   const router = useRouter()
-  const snap = useSnapshot(documentState)
+  const snap = useSnapshot(docState)
   const awareness = useAwareness()
   const ydoc = useYDoc()
   const [presenceUsers, setPresenceUsers] = useState<PresenceUser[]>([])
@@ -41,13 +43,13 @@ export function DocumentStatusToolbar({
 
   // Set current document for app-level presence tracking
   useEffect(() => {
-    if (documentName) {
-      setCurrentDocumentId(documentName)
+    if (documentId) {
+      setCurrentDocumentId(documentId)
     }
     return () => {
       setCurrentDocumentId(null)
     }
-  }, [documentName, setCurrentDocumentId])
+  }, [documentId, setCurrentDocumentId])
 
   // Track presence users from awareness
   useEffect(() => {
@@ -226,9 +228,9 @@ export function DocumentStatusToolbar({
         <div className="flex items-center gap-2">
           <span
             className="truncate max-w-[150px] text-sm font-semibold text-gray-800"
-            title={documentName}
+            title={documentTitle}
           >
-            {documentName}
+            {documentTitle}
           </span>
 
           {documentPresenceUsers.length > 0 && (

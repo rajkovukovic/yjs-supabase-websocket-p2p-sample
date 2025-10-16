@@ -43,6 +43,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...
 NEXT_PUBLIC_HOCUSPOCUS_URL=ws://localhost:1234
 NEXT_PUBLIC_SIGNALING_URL=ws://localhost:4445
+NEXT_PUBLIC_WEBRTC_PASSWORD=your-secret-password # Optional
 ```
 
 ## Development
@@ -75,7 +76,7 @@ web/
 ├── components/
 │   ├── Canvas.tsx           # SVG canvas component
 │   ├── Rectangle.tsx        # Rectangle component
-│   ├── StatusBar.tsx        # Connection status
+│   ├── StatusBar.tsx        # Granular connection status for all providers
 │   └── Cursors.tsx          # User cursors
 ├── hooks/
 │   └── useYjs.tsx           # Yjs provider hook

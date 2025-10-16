@@ -1,11 +1,11 @@
 'use client'
 
 import React from 'react'
-import { Rect } from 'react-konva'
-import { Rectangle as RectangleType } from '@/lib/schemas'
+import { Ellipse as KonvaEllipse } from 'react-konva'
+import { Ellipse as EllipseType } from '@/lib/schemas'
 import { DrawableProps } from '@/types'
 
-const Rectangle = ({
+const Ellipse = ({
   shapeProps,
   isSelected,
   onSelect,
@@ -13,18 +13,18 @@ const Rectangle = ({
   isSpacePressed,
   onDragStart,
   onDragMove,
-}: DrawableProps<RectangleType>) => {
-  const { id, x, y, width, height, fill, stroke, strokeWidth } = shapeProps
+}: DrawableProps<EllipseType>) => {
+  const { id, x, y, radiusX, radiusY, fill } = shapeProps
   return (
-    <Rect
+    <KonvaEllipse
       id={id}
       x={x}
       y={y}
-      width={width}
-      height={height}
+      radiusX={radiusX}
+      radiusY={radiusY}
       fill={fill}
-      stroke={isSelected ? '#3b82f6' : stroke}
-      strokeWidth={isSelected ? 2 : strokeWidth}
+      stroke={isSelected ? '#3b82f6' : 'black'}
+      strokeWidth={isSelected ? 2 : 1}
       draggable={!isSpacePressed}
       onClick={onSelect}
       onTap={onSelect}
@@ -41,5 +41,4 @@ const Rectangle = ({
   )
 }
 
-export default Rectangle
-
+export default Ellipse
