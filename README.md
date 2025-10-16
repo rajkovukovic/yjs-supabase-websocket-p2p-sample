@@ -62,7 +62,7 @@ A production-ready collaborative graphic editor built with Yjs, React, and Supab
 
 **Services to Deploy:**
 1. Hocuspocus Server (`server/Dockerfile.hocuspocus`)
-2. Signaling Server (`server/Dockerfile.signaling`)
+2. Signaling Server (`server/Dockerfile.y-webrtc`)
 3. Web App (`web/Dockerfile`)
 
 ### Option 3: Docker Compose (Local Development)
@@ -99,10 +99,10 @@ See individual READMEs:
 │
 ├── server/                       # Backend services
 │   ├── hocuspocus-server.ts     # WebSocket collaboration
-│   ├── signaling-server.ts      # WebRTC signaling
+│   ├── y-webrtc-signaling.ts    # WebRTC signaling
 │   ├── extensions/              # Hocuspocus extensions
 │   ├── Dockerfile.hocuspocus    # Hocuspocus production build
-│   ├── Dockerfile.signaling     # Signaling production build
+│   ├── Dockerfile.y-webrtc      # Signaling production build
 │   ├── docker-compose.yml       # Local orchestration
 │   └── package.json
 │
@@ -148,6 +148,7 @@ SUPABASE_URL=https://xxxxx.supabase.co
 SUPABASE_SERVICE_KEY=your-service-role-key
 HOCUSPOCUS_PORT=1234
 SIGNALING_PORT=4445
+Y_WEBRTC_PASSWORD=your-secret-password # Optional: Password for signaling server
 ```
 
 **Web** (`web/.env.local`):
@@ -156,6 +157,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 NEXT_PUBLIC_HOCUSPOCUS_URL=ws://localhost:1234
 NEXT_PUBLIC_SIGNALING_URL=ws://localhost:4445
+NEXT_PUBLIC_WEBRTC_PASSWORD=your-secret-password # Optional: Must match server password
 ```
 
 ### 4. Start Development
@@ -189,7 +191,7 @@ Visit `http://localhost:3000/document/test`
 
 ### Backend
 - **Hocuspocus** - Yjs WebSocket server
-- **Socket.io** - WebRTC signaling
+- **ws** - y-webrtc signaling server
 - **Supabase** - Database & storage
 
 ### Persistence

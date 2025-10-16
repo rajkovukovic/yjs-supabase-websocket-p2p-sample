@@ -53,6 +53,7 @@ HOCUSPOCUS_PORT=1234
 SIGNALING_PORT=4445
 NODE_ENV=development
 CORS_ORIGIN=*
+Y_WEBRTC_PASSWORD=your-secret-password # Optional: Password-protects signaling rooms
 
 # Optional: Database Table Names (defaults to standard names)
 # TABLE_DOCUMENTS=documents
@@ -178,49 +179,33 @@ The Hocuspocus server handles:
 
 ### Signaling Server
 
-**WebSocket Endpoint**: `ws://localhost:4445`
+The signaling server uses the `ws` library and has minimal configuration. See `y-webrtc-signaling.ts`.
 
-**Events**:
+**Protocol Messages**:
 
 #### Client → Server
 
-- `join` - Join a room (document)
-  ```typescript
-  socket.emit('join', 'document-name')
+- **`subscribe`**: Joins one or more rooms.
+  - If a server password is set, the client must send `roomName/password` as the topic.
+  ```json
+  { "type": "subscribe", "topics": ["my-document-name"] }
   ```
-
-- `leave` - Leave a room
-  ```typescript
-  socket.emit('leave', 'document-name')
+- **`unsubscribe`**: Leaves one or more rooms.
+  ```json
+  { "type": "unsubscribe", "topics": ["my-document-name"] }
   ```
-
-- `signal` - Send WebRTC signal to peer
-  ```typescript
-  socket.emit('signal', { to: 'peer-id', signal: rtcSignal })
+- **`publish`**: Broadcasts a message (e.g., a WebRTC connection offer) to all other clients in a room.
+  ```json
+  { "type": "publish", "topic": "my-document-name", "data": { ... } }
   ```
-
-- `broadcast` - Broadcast to all peers in room
-  ```typescript
-  socket.emit('broadcast', { room: 'document-name', data: {} })
-  ```
-
-- `room-info` - Get room information
-  ```typescript
-  socket.emit('room-info', 'document-name', (info) => {
-    console.log(info) // { room, peerCount, peers, createdAt }
-  })
-  ```
+- **`ping`**: A keepalive message. The server will respond with `pong`.
 
 #### Server → Client
 
-- `peers` - List of existing peers when joining
-- `peer-joined` - New peer joined the room
-- `peer-left` - Peer left the room
-- `signal` - WebRTC signal from another peer
-- `broadcast` - Broadcast message from another peer
-- `server-shutdown` - Server is shutting down
+- The server broadcasts `publish` messages from other clients to all members of a room.
+- **`pong`**: The response to a client's `ping`.
 
-## 🔧 Configuration
+### 🔧 Configuration
 
 ### Database Table Names
 
@@ -262,18 +247,7 @@ const server = Server.configure({
 
 ### Signaling Server
 
-Key configuration in `signaling-server.ts`:
-
-```typescript
-const io = new SocketIOServer(httpServer, {
-  cors: {
-    origin: CORS_ORIGIN,
-    methods: ['GET', 'POST']
-  },
-  pingInterval: 25000,
-  pingTimeout: 60000
-})
-```
+The signaling server uses the `ws` library and has minimal configuration. See `y-webrtc-signaling.ts`.
 
 ## 📊 Monitoring
 
@@ -417,12 +391,12 @@ server/
 ├── extensions/
 │   └── supabase-db.ts       # Supabase database extension
 ├── hocuspocus-server.ts     # Main WebSocket server
-├── signaling-server.ts      # WebRTC signaling server
+├── y-webrtc-signaling.ts      # WebRTC signaling server
 ├── package.json
 ├── tsconfig.json
 ├── docker-compose.yml
 ├── Dockerfile.hocuspocus
-├── Dockerfile.signaling
+├── Dockerfile.y-webrtc
 ├── .dockerignore
 ├── env.example
 └── README.md
