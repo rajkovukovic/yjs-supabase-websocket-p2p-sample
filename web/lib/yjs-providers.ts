@@ -2,12 +2,25 @@ import * as Y from 'yjs'
 import { HocuspocusProvider } from '@hocuspocus/provider'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import { WebrtcProvider } from 'y-webrtc'
-import { documentState } from '@/store/document'
+import { docState } from '@/store/document'
 import { HOCUSPOCUS_URL, WEBRTC_PASSWORD, Y_WEBRTC_SIGNALING_URL } from './Env'
+import { EntityType, entityConfigs } from './schemas'
 
-export function setupProviders(documentName: string, ydoc: Y.Doc) {
+export function setupProviders(
+  entityType: EntityType,
+  entityId: string,
+  ydoc: Y.Doc,
+) {
+  const docPath = `${entityType}:${entityId}`
+
+  // Initialize the Yjs document structure based on the entity type
+  const config = entityConfigs[entityType]
+  if (config && config.yjsBuilder) {
+    config.yjsBuilder(ydoc)
+  }
+
   // 1. IndexedDB (local persistence)
-  const indexeddbProvider = new IndexeddbPersistence(documentName, ydoc)
+  const indexeddbProvider = new IndexeddbPersistence(docPath, ydoc)
   
   indexeddbProvider.on('synced', () => {
     console.log('✅ IndexedDB loaded')
@@ -16,7 +29,7 @@ export function setupProviders(documentName: string, ydoc: Y.Doc) {
   // 2. Hocuspocus (WebSocket, authoritative server)
   const hocuspocusProvider = new HocuspocusProvider({
     url: HOCUSPOCUS_URL,
-    name: documentName,
+    name: docPath,
     document: ydoc,
     
     // MVP: Provide a dummy token to satisfy HocuspocusProvider v2.15.3 client-side validation
@@ -111,7 +124,7 @@ export function setupProviders(documentName: string, ydoc: Y.Doc) {
     webrtcOptions.password = WEBRTC_PASSWORD
   }
   
-  const webrtcProvider = new WebrtcProvider(documentName, ydoc, webrtcOptions)
+  const webrtcProvider = new WebrtcProvider(docPath, ydoc, webrtcOptions)
   
   if (Y_WEBRTC_SIGNALING_URL) {
     console.log('📡 WebRTC provider configured with signaling server:', Y_WEBRTC_SIGNALING_URL)
@@ -239,11 +252,11 @@ export function setupProviders(documentName: string, ydoc: Y.Doc) {
   const updatePeerCount = () => {
     const states = Array.from(hocuspocusProvider.awareness.getStates().keys())
     // Subtract 1 to exclude self
-    documentState.peers = Math.max(0, states.length - 1)
+    docState.peers = Math.max(0, states.length - 1)
     
     console.log('👥 Awareness changed:', {
       totalClients: states.length,
-      peerCount: documentState.peers,
+      peerCount: docState.peers,
       clientIds: states,
       myId: hocuspocusProvider.awareness.clientID
     })

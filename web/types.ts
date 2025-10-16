@@ -1,3 +1,5 @@
+import { Drawable, Comment } from './lib/schemas'
+
 export interface Rectangle {
   id: string
   x: number
@@ -9,6 +11,8 @@ export interface Rectangle {
   strokeWidth?: number
 }
 
+export { Drawable, Comment }
+
 export interface ViewBox {
   x: number
   y: number
@@ -17,11 +21,16 @@ export interface ViewBox {
 }
 
 export interface DocumentState {
-  rectangles: Rectangle[]
+  entity: {
+    name?: string
+    drawables?: Drawable[]
+    comments?: Comment[]
+    [key: string]: any
+  }
   synced: boolean
   status: 'disconnected' | 'connecting' | 'connected'
   peers: number
-  selectedRectangleIds: string[]
+  selectedIds: string[]
 }
 
 export interface CursorState {

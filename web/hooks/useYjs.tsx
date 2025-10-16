@@ -3,71 +3,74 @@
 import React, { useEffect, useState, useContext, createContext } from 'react'
 import * as Y from 'yjs'
 import { setupProviders } from '../lib/yjs-providers'
-import { syncYjsToValtio, documentState } from '../store/document'
+import { syncYjsToValtio, docState } from '../store/document'
 import { getDeviceInfo } from '@/lib/deviceInfo'
+import { EntityType } from '@/lib/schemas'
 
 const YjsContext = createContext<Y.Doc | null>(null)
 
-export function YjsProvider({ 
-  documentName, 
-  children 
-}: { 
-  documentName: string
-  children: React.ReactNode 
+export function YjsProvider({
+  entityType,
+  entityId,
+  children,
+}: {
+  entityType: EntityType
+  entityId: string
+  children: React.ReactNode
 }) {
   const [ydoc] = useState(() => new Y.Doc())
   const [ready, setReady] = useState(false)
-  
+
   useEffect(() => {
-    const providers = setupProviders(documentName, ydoc)
-    
+    const providers = setupProviders(entityType, entityId, ydoc)
+
     // Store providers on the ydoc for access by other hooks
     ;(ydoc as any)._hocuspocusProvider = providers.hocuspocusProvider
     ;(ydoc as any)._webrtcProvider = providers.webrtcProvider
-    
+
     // Sync Yjs to Valtio
-    const unsyncYjs = syncYjsToValtio(ydoc)
-    
+    const unsyncYjs = syncYjsToValtio(ydoc, entityType)
+
     // Show UI as soon as IndexedDB loads (don't wait for network)
     providers.indexeddbProvider.on('synced', () => {
       setReady(true)
     })
-    
+
     // Also set ready after a short timeout as fallback
     const timeout = setTimeout(() => {
       setReady(true)
     }, 1000)
-    
+
     // Track sync status for Hocuspocus
     providers.hocuspocusProvider.on('synced', () => {
-      documentState.synced = true
+      docState.synced = true
     })
-    
+
     providers.hocuspocusProvider.on('status', ({ status }: { status: any }) => {
-      documentState.status = status
+      docState.status = status
     })
-    
+
     // Track connected users via Awareness (works with Hocuspocus, no WebRTC needed)
     const awareness = providers.hocuspocusProvider.awareness
-    
+
     const updatePeerCount = () => {
       // Get all awareness states (including self)
       const states = Array.from(awareness.getStates().keys())
       // Subtract 1 to exclude self
-      documentState.peers = Math.max(0, states.length - 1)
+      docState.peers = Math.max(0, states.length - 1)
     }
-    
+
     awareness.on('change', updatePeerCount)
     updatePeerCount() // Initial count
-    
+
     // Also track WebRTC peers if enabled (optional)
     if (providers.webrtcProvider) {
       providers.webrtcProvider.on('peers', ({ webrtcPeers }: any) => {
         // Use WebRTC peer count if available (more accurate for P2P)
-        documentState.peers = webrtcPeers.length
+        docState.peers = webrtcPeers.length
       })
     }
-    
+
     return () => {
       clearTimeout(timeout)
       unsyncYjs()
@@ -76,8 +79,8 @@ export function YjsProvider({
       delete (ydoc as any)._webrtcProvider
       providers.destroy()
     }
-  }, [documentName, ydoc])
-  
+  }, [entityType, entityId, ydoc])
+
   if (!ready) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-50">
@@ -90,7 +93,7 @@ export function YjsProvider({
       </div>
     )
   }
-  
+
   return (
     <YjsContext.Provider value={ydoc}>
       {children}
@@ -108,7 +111,7 @@ export function useYDoc() {
 export function useAwareness() {
   const ydoc = useYDoc()
   const [awareness, setAwareness] = useState<any>(null)
-  
+
   useEffect(() => {
     // Get awareness from hocuspocus provider
     const provider = (ydoc as any)._hocuspocusProvider
@@ -123,7 +126,7 @@ export function useAwareness() {
       awareness.setLocalStateField('device', deviceInfo.full)
     }
   }, [awareness])
-  
+
   return awareness
 }
 

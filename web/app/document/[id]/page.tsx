@@ -36,7 +36,7 @@ export default function DocumentPage({ params }: { params: { id: string } }) {
   
   return (
     <AuthGuard>
-      <YjsProvider documentName={id}>
+      <YjsProvider entityType="document" entityId={id}>
         <DocumentContent documentName={id} />
       </YjsProvider>
     </AuthGuard>
