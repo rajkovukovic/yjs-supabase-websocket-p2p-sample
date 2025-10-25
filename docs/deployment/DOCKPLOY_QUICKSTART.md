@@ -53,7 +53,7 @@ Protocol: HTTP/WebSocket (enable WebSocket)
 
 **Environment Variables:**
 ```env
-SIGNALING_PORT=4445
+Y_WEBRTC_SIGNALING_PORT=4445
 NODE_ENV=production
 ```
 

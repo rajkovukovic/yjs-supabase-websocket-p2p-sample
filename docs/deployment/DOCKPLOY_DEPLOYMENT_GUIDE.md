@@ -42,7 +42,7 @@ NEXT_PUBLIC_WEBRTC_PASSWORD=your-secret-password
 SUPABASE_URL=https://xxxxx.supabase.co
 SUPABASE_SERVICE_KEY=your-service-role-key-here
 HOCUSPOCUS_PORT=1234
-SIGNALING_PORT=4445
+Y_WEBRTC_SIGNALING_PORT=4445
 NODE_ENV=production
 CORS_ORIGIN=*
 ```
@@ -154,7 +154,7 @@ CREATE INDEX idx_updates_created ON document_updates(created_at);
 
 3. **Environment Variables**:
    ```env
-   SIGNALING_PORT=4445
+   Y_WEBRTC_SIGNALING_PORT=4445
    NODE_ENV=production
    ```
 

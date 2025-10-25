@@ -17,7 +17,7 @@ const __dirname = dirname(__filename)
 dotenv.config({ path: join(__dirname, '..', '.env') })
 
 const HOCUSPOCUS_PORT = process.env.HOCUSPOCUS_PORT || 1234
-const SIGNALING_PORT = process.env.SIGNALING_PORT || 4445
+const SIGNALING_PORT = process.env.Y_WEBRTC_SIGNALING_PORT || 4445
 
 function log(type, message) {
   const colors = {

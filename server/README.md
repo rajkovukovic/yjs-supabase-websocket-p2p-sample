@@ -50,7 +50,7 @@ Edit `.env` with your Supabase credentials:
 SUPABASE_URL=https://xxxxx.supabase.co
 SUPABASE_SERVICE_KEY=your-service-role-key-here
 HOCUSPOCUS_PORT=1234
-SIGNALING_PORT=4445
+Y_WEBRTC_SIGNALING_PORT=4445
 NODE_ENV=development
 CORS_ORIGIN=*
 Y_WEBRTC_PASSWORD=your-secret-password # Optional: Password-protects signaling rooms

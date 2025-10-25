@@ -147,7 +147,7 @@ pnpm install
 SUPABASE_URL=https://xxxxx.supabase.co
 SUPABASE_SERVICE_KEY=your-service-role-key
 HOCUSPOCUS_PORT=1234
-SIGNALING_PORT=4445
+Y_WEBRTC_SIGNALING_PORT=4445
 Y_WEBRTC_PASSWORD=your-secret-password # Optional: Password for signaling server
 ```
 

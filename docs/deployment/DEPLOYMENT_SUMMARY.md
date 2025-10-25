@@ -55,7 +55,7 @@ git push origin main
 - Dockerfile: `server/Dockerfile.signaling`
 - Context: `server`
 - Port: `4445` (WebSocket enabled)
-- Env vars: `SIGNALING_PORT=4445`
+- Env vars: `Y_WEBRTC_SIGNALING_PORT=4445`
 
 **Service 3: Web App (5 min)**
 - Dockerfile: `web/Dockerfile`

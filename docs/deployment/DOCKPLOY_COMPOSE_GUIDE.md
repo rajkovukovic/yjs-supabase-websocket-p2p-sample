@@ -244,7 +244,7 @@ services:
     ports:
       - "4445:4445"  # Expose port for Dockploy
     environment:
-      - SIGNALING_PORT=4445
+      - Y_WEBRTC_SIGNALING_PORT=4445
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
     restart: unless-stopped
     healthcheck:

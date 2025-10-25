@@ -48,7 +48,7 @@ async function checkEnvironmentVariables() {
     'SUPABASE_URL',
     'SUPABASE_SERVICE_KEY',
     'HOCUSPOCUS_PORT',
-    'SIGNALING_PORT'
+    'Y_WEBRTC_SIGNALING_PORT'
   ]
   
   let allPresent = true
@@ -182,7 +182,7 @@ function checkPortAvailability() {
   header('Port Configuration')
   
   const hocuspocusPort = parseInt(process.env.HOCUSPOCUS_PORT || '1234')
-  const signalingPort = parseInt(process.env.SIGNALING_PORT || '4445')
+  const signalingPort = parseInt(process.env.Y_WEBRTC_SIGNALING_PORT || '4445')
   
   if (hocuspocusPort === signalingPort) {
     log('error', `Hocuspocus and Signaling servers are using the same port (${hocuspocusPort})`)
