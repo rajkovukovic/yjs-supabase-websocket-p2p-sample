@@ -49,11 +49,11 @@ COPY --from=builder --chown=ywebrtc:nodejs /app/package.json ./package.json
 
 USER ywebrtc
 
-EXPOSE 4445
+EXPOSE ${Y_WEBRTC_SIGNALING_PORT:-4445}
 
-# Health check
+# Health check - use dynamic port from environment variable
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:4445/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${Y_WEBRTC_SIGNALING_PORT:-4445}/health || exit 1
 
 CMD ["node", "dist/y-webrtc-signaling.js"]
 

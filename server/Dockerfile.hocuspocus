@@ -49,11 +49,11 @@ COPY --from=builder --chown=hocuspocus:nodejs /app/package.json ./package.json
 
 USER hocuspocus
 
-EXPOSE 1234
+EXPOSE ${HOCUSPOCUS_PORT:-1234}
 
-# Health check
+# Health check - use dynamic port from environment variable
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:1234', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); })"
+  CMD node -e "require('http').get('http://localhost:' + (process.env.HOCUSPOCUS_PORT || '1234'), (res) => { process.exit(res.statusCode === 200 ? 0 : 1); })"
 
 CMD ["node", "dist/hocuspocus-server.js"]
 
