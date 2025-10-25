@@ -2,7 +2,7 @@ services:
   hocuspocus:
     build:
       context: .
-      dockerfile: hocuspocus/Dockerfile.hocuspocus
+      dockerfile: Dockerfile.hocuspocus
     ports:
       - "${HOCUSPOCUS_PORT:-1234}:${HOCUSPOCUS_PORT:-1234}"
     environment:
@@ -16,7 +16,7 @@ services:
   y-webrtc-signaling:
     build:
       context: .
-      dockerfile: y-webrtc-signaling/Dockerfile.y-webrtc
+      dockerfile: Dockerfile.y-webrtc
     ports:
       - "${Y_WEBRTC_SIGNALING_PORT:-4445}:${Y_WEBRTC_SIGNALING_PORT:-4445}"
     environment:
