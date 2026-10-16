@@ -9,7 +9,7 @@ interface AuthGuardProps {
 }
 
 export const AuthGuard = ({ children }: AuthGuardProps) => {
-  const { user, loading, signInWithGoogle } = useAuth()
+  const { user, loading, signInWithGoogle, signInWithPassword } = useAuth()
 
   if (loading) {
     return (
@@ -23,7 +23,7 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
   }
 
   if (!user) {
-    return <LoginPage onSignIn={signInWithGoogle} />
+    return <LoginPage onSignIn={signInWithGoogle} onEmailSignIn={signInWithPassword} />
   }
 
   return <>{children}</>
