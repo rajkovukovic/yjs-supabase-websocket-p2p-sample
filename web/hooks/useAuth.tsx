@@ -65,6 +65,15 @@ export const useAuth = () => {
     }
   }
 
+  const signInWithPassword = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (error) {
+      console.error('Error signing in with email:', error)
+      throw error
+    }
+  }
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut()
     if (error) {
@@ -78,6 +87,7 @@ export const useAuth = () => {
     session,
     loading,
     signInWithGoogle,
+    signInWithPassword,
     signOut,
   }
 }

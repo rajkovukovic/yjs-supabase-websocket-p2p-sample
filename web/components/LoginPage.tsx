@@ -1,14 +1,32 @@
 'use client'
 
-import { useState } from 'react'
+import { FormEvent, useState } from 'react'
+import { ENABLE_EMAIL_LOGIN } from '@/lib/Env'
 
 interface LoginPageProps {
   onSignIn: () => Promise<void>
+  onEmailSignIn?: (email: string, password: string) => Promise<void>
 }
 
-export const LoginPage = ({ onSignIn }: LoginPageProps) => {
+export const LoginPage = ({ onSignIn, onEmailSignIn }: LoginPageProps) => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+
+  const handleEmailSignIn = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!onEmailSignIn) return
+    try {
+      setIsLoading(true)
+      setError(null)
+      await onEmailSignIn(email, password)
+    } catch (err) {
+      console.error('Email sign in error:', err)
+      setError('Invalid email or password.')
+      setIsLoading(false)
+    }
+  }
 
   const handleSignIn = async () => {
     try {
@@ -123,6 +141,44 @@ export const LoginPage = ({ onSignIn }: LoginPageProps) => {
               </>
             )}
           </button>
+
+          {/* Email/password sign in (enabled via NEXT_PUBLIC_ENABLE_EMAIL_LOGIN) */}
+          {ENABLE_EMAIL_LOGIN && onEmailSignIn && (
+            <form onSubmit={handleEmailSignIn} className="mt-6 space-y-3">
+              <div className="flex items-center gap-3 text-xs text-gray-400 uppercase">
+                <div className="flex-1 border-t border-gray-200" />
+                or
+                <div className="flex-1 border-t border-gray-200" />
+              </div>
+              <input
+                type="email"
+                name="email"
+                placeholder="Email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full border-2 border-gray-300 rounded-xl py-3 px-4 text-gray-900 focus:border-blue-500 focus:outline-none"
+              />
+              <input
+                type="password"
+                name="password"
+                placeholder="Password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full border-2 border-gray-300 rounded-xl py-3 px-4 text-gray-900 focus:border-blue-500 focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Sign in with email
+              </button>
+            </form>
+          )}
 
           {/* Footer */}
           <div className="mt-8 pt-6 border-t border-gray-200">
